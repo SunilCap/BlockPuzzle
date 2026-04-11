@@ -171,23 +171,41 @@ function genChallengePieces(day,month,year,diff){
 function chKey(day,month,year){return 'bp_ch_'+year+'_'+month+'_'+day;}
 
 function loadChallenge(day,month,year){
-  try{return JSON.parse(_ls.getItem(chKey(day,month,year))||'null');}catch(e){return null;}
+  try{return JSON.parse(localStorage.getItem(chKey(day,month,year))||'null');}catch(e){return null;}
 }
 function saveChallenge(day,month,year,data){
-  try{_ls.setItem(chKey(day,month,year),JSON.stringify(data));}catch(e){}
+  try{localStorage.setItem(chKey(day,month,year),JSON.stringify(data));}catch(e){}
 }
 
 // Get all trophies across all time
 function getAllTrophies(){
   var trophies=[];
+  var seen={};
+  // Method 1: enumerate localStorage keys
   try{
-    var keys=Object.keys(_ls);
+    var keys=Object.keys(localStorage);
     keys.forEach(function(k){
       if(k.indexOf('bp_ch_')===0){
-        var d=JSON.parse(_ls.getItem(k));
-        if(d&&d.completed)trophies.push(d);
+        var d=JSON.parse(localStorage.getItem(k)||'null');
+        if(d&&d.completed&&!seen[k]){seen[k]=true;trophies.push(d);}
       }
     });
+  }catch(e){}
+  // Method 2: iterate last 3 months as fallback (covers cases where key enumeration fails)
+  try{
+    var now=new Date();
+    for(var mo=0;mo<3;mo++){
+      var mm=now.getMonth()+1-mo;
+      var yy=now.getFullYear();
+      if(mm<1){mm+=12;yy--;}
+      for(var dd=1;dd<=31;dd++){
+        var k=chKey(dd,mm,yy);
+        if(!seen[k]){
+          var d=loadChallenge(dd,mm,yy);
+          if(d&&d.completed){seen[k]=true;trophies.push(d);}
+        }
+      }
+    }
   }catch(e){}
   trophies.sort(function(a,b){return b.earnedAt-a.earnedAt;});
   return trophies;
@@ -424,7 +442,7 @@ function renderChallengesModal(){
 
   if(trophies.length===0){
     var empty=document.createElement('div');
-    empty.style.cssText='color:rgba(255,255,255,.25);font-size:12px;padding:8px';
+    empty.style.cssText='color:rgba(255,255,255,.25);font-size:12px;padding:8px 0';
     empty.textContent='Complete daily challenges to earn trophies!';
     shelf.appendChild(empty);
   } else {
@@ -432,18 +450,26 @@ function renderChallengesModal(){
     chGrid.style.cssText='display:flex;flex-wrap:wrap;gap:8px;width:100%';
     var unconv=trophies.filter(function(t){return !t.converted;});
     var totSt=unconv.reduce(function(s,t){return s+[10,20,35][t.diff];},0);
-    if(unconv.length){var inf=document.createElement('div');inf.style.cssText='font-size:11px;color:rgba(255,200,50,.6);margin-bottom:8px';inf.textContent=unconv.length+(unconv.length!==1?' trophies':' trophy')+' → '+totSt+'⭐ available';shelf.appendChild(inf);}
-    unconv.forEach(function(t){
-      var card=document.createElement('div');
-      card.className='trophy-card '+DIFF_LABELS[t.diff];
-      card.innerHTML='<div class="tc-icon">'+getTrophyIcon(t.diff)+'</div>'
-        +'<div class="tc-day">Day '+t.day+'</div>'
-        +'<div class="tc-score">'+t.score+'</div>'
-        +'<div class="tc-diff">'+DIFF_NAMES[t.diff]+' +'+[10,20,35][t.diff]+'⭐</div>';
-      chGrid.appendChild(card);
-    });
-    shelf.appendChild(chGrid);
-    if(unconv.length){var cb=document.createElement('button');cb.className='convert-btn';cb.textContent='💰 Convert All → +'+totSt+'⭐';(function(l,b){b.addEventListener('click',function(){convertTrophiesToStars(l,b);});})(unconv,cb);shelf.appendChild(cb);}
+    if(unconv.length===0){
+      // All trophies converted
+      var allDone=document.createElement('div');
+      allDone.style.cssText='color:rgba(30,207,176,.6);font-size:12px;padding:8px 0';
+      allDone.textContent='✓ All '+trophies.length+' trophies converted to stars!';
+      shelf.appendChild(allDone);
+    } else {
+      if(unconv.length){var inf=document.createElement('div');inf.style.cssText='font-size:11px;color:rgba(255,200,50,.6);margin-bottom:8px';inf.textContent=unconv.length+(unconv.length!==1?' trophies':' trophy')+' → '+totSt+'⭐ available';shelf.appendChild(inf);}
+      unconv.forEach(function(t){
+        var card=document.createElement('div');
+        card.className='trophy-card '+DIFF_LABELS[t.diff];
+        card.innerHTML='<div class="tc-icon">'+getTrophyIcon(t.diff)+'</div>'
+          +'<div class="tc-day">Day '+t.day+'</div>'
+          +'<div class="tc-score">'+t.score+'</div>'
+          +'<div class="tc-diff">'+DIFF_NAMES[t.diff]+' +'+[10,20,35][t.diff]+'⭐</div>';
+        chGrid.appendChild(card);
+      });
+      shelf.appendChild(chGrid);
+      if(unconv.length){var cb=document.createElement('button');cb.className='convert-btn';cb.textContent='💰 Convert All → +'+totSt+'⭐';(function(l,b){b.addEventListener('click',function(){convertTrophiesToStars(l,b);});})(unconv,cb);shelf.appendChild(cb);}
+    }
   }
   // Month master check — current viewed month
   var mt=getMonthTrophies(chViewMonth,chViewYear);
