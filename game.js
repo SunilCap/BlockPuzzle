@@ -939,7 +939,7 @@ var slotW=function(id){var e=document.getElementById(id);if(!e)return 56;var r=e
 function slotInnerH(id){var e=document.getElementById(id);if(!e)return 50;var r=e.getBoundingClientRect();return Math.max(30,r.height-18);}
 function fitCs(sh,W,H){var g=2,cc=sh[0].length,rr=sh.length;var byW=Math.floor((W-g*(cc-1))/cc);var byH=Math.floor((H-g*(rr-1))/rr);return Math.max(4,Math.min(byW,byH,16));}
 var cellEl=function(r,c){if(r<0||r>=ROWS||c<0||c>=COLS)return null;return document.getElementById('board').children[r*COLS+c];};
-function resetCell(r,c){var el=cellEl(r,c);if(el)el.className='cell'+(grid[r][c]?' on':'');}
+function resetCell(r,c){var el=cellEl(r,c);if(!el)return;var cls='cell';if(grid[r][c]){cls+=' on';if(advMode&&advColorGrid[r]&&advColorGrid[r][c])cls+=' adv-block';}el.className=cls;}
 function syncBoard(){for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){resetCell(r,c);}
   if(advMode)renderAdvCellStyles();}
 function clearGhost(){for(var i=0;i<ghostCells.length;i++){var g=ghostCells[i];resetCell(g.r,g.c);}ghostCells=[];snapPos=null;}
@@ -952,11 +952,15 @@ function doPlace(sh,sr,sc){
   for(var r=0;r<sh.length;r++)for(var c=0;c<sh[r].length;c++){
     if(sh[r][c]){
       grid[sr+r][sc+c]=1;n++;
+      if(advMode&&sh[r][c]===2&&advColorGrid[sr+r])advColorGrid[sr+r][sc+c]=1;
       var el=cellEl(sr+r,sc+c);
       if(el){
-        el.className='cell on placed';
-        // Remove placed class after animation
-        (function(e){setTimeout(function(){e.classList.remove('placed');},200);})(el);
+        var dcls='cell on placed'+(advMode&&sh[r][c]===2?' adv-block':'');
+        el.className=dcls;
+        (function(e,col){setTimeout(function(){
+          e.classList.remove('placed');
+          if(col&&advMode)e.classList.add('adv-block');
+        },200);})(el,sh[r][c]===2);
       }
     }
   }
@@ -1291,8 +1295,8 @@ function clearLines(onDone){
   setTimeout(function(){
     // Track adv block clears before zeroing
     if(advMode){rows.forEach(function(r){for(var c=0;c<COLS;c++)advTrackClearBlock(r,c);});cols.forEach(function(c){for(var r=0;r<ROWS;r++)advTrackClearBlock(r,c);});}
-    rows.forEach(function(r){grid[r].fill(0);});
-    cols.forEach(function(c){for(var r=0;r<ROWS;r++)grid[r][c]=0;});
+    rows.forEach(function(r){grid[r].fill(0);if(advMode&&advColorGrid[r])advColorGrid[r].fill(0);});
+    cols.forEach(function(c){for(var r=0;r<ROWS;r++){grid[r][c]=0;if(advMode&&advColorGrid[r])advColorGrid[r][c]=0;}});
     syncBoard();
     if(onDone)onDone(pts);
   },totalAnim);
@@ -2356,6 +2360,8 @@ function startAdvLevel(lvl){
   // Init objective progress
   advObjProgress={};
   advColoredPieces=[null,null,null];
+  advColorGrid=[];
+  for(var _i=0;_i<10;_i++)advColorGrid.push([0,0,0,0,0,0,0,0,0,0]);
   lvl.objectives.forEach(function(o){advObjProgress[o.type]=0;});
   // Build ice/block grids
   advIceGrid=[];advBlockGrid=[];
@@ -2612,11 +2618,13 @@ function showAdvFailed(){
 function resetAdvMode(){
   advMode=false;advLevel=null;advLevelComplete=false;
   advIceGrid=[];advBlockGrid=[];advObjProgress={};
+  advColorGrid=[];advColoredPieces=[null,null,null];
   hideAdvHUD();
 }
 
 
 var advColoredPieces=[null,null,null];
+var advColorGrid=[];
 function advColorizePiece(shape){
   // Embed colour directly into shape: 2 = coloured cell
   if(!advMode||!advLevel)return shape;
