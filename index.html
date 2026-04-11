@@ -427,38 +427,36 @@ body.modal-open #w.show #go{pointer-events:auto;user-select:auto}
 #chest-open-close{width:100%;padding:13px;background:linear-gradient(135deg,#7c5cbf,#9b7de8);border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;touch-action:manipulation}
 
 /* ══ ADVENTURE MAP ══ */
-#adv-map-screen{position:fixed;top:0;left:0;width:390px;height:844px;background:linear-gradient(180deg,#0d1b2a 0%,#1a2a4a 40%,#2a1a4a 100%);z-index:150;display:none;flex-direction:column;transform-origin:top left;overflow:hidden}
+#adv-map-screen{position:fixed;top:0;left:0;width:390px;height:844px;background:linear-gradient(180deg,#3a1a6a 0%,#2a1254 50%,#3a1a6a 100%);z-index:150;display:none;flex-direction:column;transform-origin:top left;overflow:hidden}
 #adv-map-screen.show{display:flex}
-#adv-map-header{display:flex;align-items:center;justify-content:space-between;padding:max(env(safe-area-inset-top,0px),14px) 16px 12px;flex-shrink:0;background:rgba(0,0,0,.3)}
-#adv-map-title{font-size:18px;font-weight:900;color:#f0e060;letter-spacing:.5px}
-#adv-map-close{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:6px 12px;color:#fff;font-size:13px;cursor:pointer;touch-action:manipulation}
-#adv-map-scroll{flex:1;overflow-y:auto;padding:20px 20px 40px;-webkit-overflow-scrolling:touch}
-#adv-map-path{display:flex;flex-direction:column;align-items:center;gap:0;position:relative}
-
-/* Path line */
-#adv-map-path::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:4px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.05));transform:translateX(-50%);z-index:0}
-
-/* Level node */
-.adv-node{position:relative;z-index:1;margin:12px 0;display:flex;align-items:center;gap:14px}
-.adv-node:nth-child(odd){flex-direction:row;align-self:flex-start;margin-left:20px}
-.adv-node:nth-child(even){flex-direction:row-reverse;align-self:flex-end;margin-right:20px}
-.adv-node-btn{width:64px;height:64px;border-radius:50%;border:3px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:transform .15s;flex-shrink:0;position:relative}
-.adv-node-btn:active{transform:scale(.92)}
-.adv-node-btn.completed{background:linear-gradient(135deg,#7c5cbf,#9b7de8);border-color:rgba(255,255,255,.5)}
-.adv-node-btn.current{background:linear-gradient(135deg,#f0a020,#f0e060);border-color:#f0e060;box-shadow:0 0 20px rgba(240,200,50,.5);animation:nodepulse 2s ease-in-out infinite}
-.adv-node-btn.locked{opacity:.4;cursor:default}
-.adv-node-btn.chest{background:linear-gradient(135deg,#c0a030,#f0e060);border-color:#f0e060}
-.adv-node-btn.chest.completed{background:linear-gradient(135deg,#808080,#aaa);border-color:#aaa}
-@keyframes nodepulse{0%,100%{box-shadow:0 0 20px rgba(240,200,50,.5)}50%{box-shadow:0 0 30px rgba(240,200,50,.8),0 0 50px rgba(240,200,50,.3)}}
-.adv-node-num{font-size:11px;font-weight:900;color:rgba(255,255,255,.7)}
-.adv-node-icon{font-size:22px;line-height:1}
-.adv-node-stars{display:flex;gap:1px;margin-top:1px}
-.adv-star{font-size:10px;opacity:.3}
-.adv-star.lit{opacity:1}
-.adv-node-info{max-width:140px}
-.adv-node-name{font-size:12px;font-weight:700;color:#fff;margin-bottom:3px}
-.adv-node-obj{font-size:10px;color:rgba(255,255,255,.4);line-height:1.4}
-.adv-chest-badge{position:absolute;top:-4px;right:-4px;width:20px;height:20px;background:#f0e060;border-radius:50%;font-size:11px;display:flex;align-items:center;justify-content:center}
+#adv-map-header{display:flex;align-items:center;justify-content:space-between;padding:max(env(safe-area-inset-top,0px),14px) 16px 12px;flex-shrink:0;background:rgba(0,0,0,.35);border-bottom:2px solid rgba(255,200,50,.3)}
+#adv-map-back{background:none;border:none;color:#f0e060;font-size:22px;cursor:pointer;touch-action:manipulation;padding:4px 8px}
+#adv-map-title{font-size:20px;font-weight:900;color:#fff;letter-spacing:.5px;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+#adv-map-timer{background:rgba(124,92,191,.5);border:1px solid rgba(255,200,50,.4);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:700;color:#f0e060}
+#adv-map-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:10px}
+/* SVG path canvas */
+#adv-map-canvas{position:relative;width:350px;margin:0 auto;display:block}
+#adv-path-svg{position:absolute;top:0;left:0;width:100%;pointer-events:none;z-index:0}
+/* Node circles */
+.adv-node{position:absolute;z-index:2;width:64px;height:64px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;transition:transform .15s;border:4px solid rgba(0,0,0,.3);box-shadow:0 4px 12px rgba(0,0,0,.4),inset 0 2px 4px rgba(255,255,255,.2)}
+.adv-node:active{transform:scale(.92)}
+.adv-node.locked{background:radial-gradient(circle at 35% 35%,#aaa,#666);opacity:.5;cursor:default}
+.adv-node.completed{background:radial-gradient(circle at 35% 35%,#b0b8c8,#7a8494);border-color:rgba(180,190,210,.5)}
+.adv-node.current{background:radial-gradient(circle at 35% 35%,#ffe060,#f0a020);border-color:#f0c030;box-shadow:0 0 20px rgba(240,180,30,.7),0 4px 12px rgba(0,0,0,.4);animation:nodepulse 1.8s ease-in-out infinite}
+.adv-node.chest-node{background:radial-gradient(circle at 35% 35%,#ffd060,#c08020);border-color:#f0c030;width:56px;height:56px;font-size:28px}
+.adv-node.chest-node.claimed{background:radial-gradient(circle at 35% 35%,#aaa,#666);opacity:.6}
+@keyframes nodepulse{0%,100%{box-shadow:0 0 20px rgba(240,180,30,.7),0 4px 12px rgba(0,0,0,.4)}50%{box-shadow:0 0 35px rgba(240,180,30,.9),0 0 60px rgba(240,180,30,.4),0 4px 12px rgba(0,0,0,.4)}}
+.adv-node-num{font-size:20px;font-weight:900;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.5);line-height:1}
+.adv-node-stars{display:flex;gap:0px;margin-top:1px}
+.adv-star{font-size:9px;opacity:.25;color:#fff}
+.adv-star.lit{opacity:1;color:#f0e060}
+/* Fixed play button bar */
+#adv-map-footer{flex-shrink:0;background:rgba(0,0,0,.4);border-top:2px solid rgba(255,200,50,.3);padding:12px 20px;padding-bottom:max(12px,env(safe-area-inset-bottom,12px));display:flex;align-items:center;justify-content:space-between;gap:12px}
+#adv-play-btn{flex:1;padding:15px;background:linear-gradient(180deg,#5ccc30,#3a9918);border:none;border-radius:30px;color:#fff;font-size:18px;font-weight:900;cursor:pointer;touch-action:manipulation;box-shadow:0 4px 0 #2a7010,0 6px 16px rgba(0,0,0,.4);text-shadow:0 2px 4px rgba(0,0,0,.3);-webkit-tap-highlight-color:transparent}
+#adv-play-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #2a7010}
+#adv-awards-btn{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;touch-action:manipulation;padding:4px 8px}
+#adv-awards-btn span{font-size:28px}
+#adv-awards-btn label{font-size:10px;color:rgba(255,255,255,.6);cursor:pointer}
 
 /* ── ADVENTURE GAME SCREEN ── */
 #adv-hud{display:flex;align-items:center;justify-content:space-between;width:100%;padding:4px 10px;box-sizing:border-box;background:rgba(0,0,0,.2);flex-shrink:0}
@@ -680,11 +678,18 @@ body.modal-open #w.show #go{pointer-events:auto;user-select:auto}
 
 <div id="adv-map-screen">
   <div id="adv-map-header">
-    <div id="adv-map-title">🗺️ Adventure</div>
-    <button id="adv-map-close">✕ Close</button>
+    <button id="adv-map-back">←</button>
+    <div id="adv-map-title">Adventure</div>
+    <div id="adv-map-timer">Loading...</div>
   </div>
   <div id="adv-map-scroll">
-    <div id="adv-map-path"></div>
+    <div id="adv-map-canvas">
+      <svg id="adv-path-svg" height="1200"></svg>
+    </div>
+  </div>
+  <div id="adv-map-footer">
+    <button id="adv-play-btn">Play Level 1</button>
+    <button id="adv-awards-btn"><span>🏆</span><label>Awards</label></button>
   </div>
 </div>
 
@@ -2916,26 +2921,131 @@ function closeAdvMap(){
   var screen=document.getElementById('adv-map-screen');
   if(screen)screen.classList.remove('show');
 }
+// S-curve node positions for 25 levels (x from left of 350px canvas, y top-down)
+// Levels rendered bottom-to-top: level 1 at bottom, 25 at top
+var ADV_NODE_POSITIONS=(function(){
+  // 5 rows of 5 levels, zigzag left-right
+  // Row heights spaced 180px apart, within 1200px canvas
+  var pos=[];
+  var xPositions=[
+    [50,120,190,260,320],  // row 1 (levels 1-5): left to right
+    [320,260,190,120,50],  // row 2 (levels 6-10): right to left
+    [50,120,190,260,320],  // row 3 (levels 11-15): left to right
+    [320,260,190,120,50],  // row 4 (levels 16-20): right to left
+    [50,120,190,260,320],  // row 5 (levels 21-25): left to right
+  ];
+  var baseY=1160; // level 1 y (bottom)
+  for(var lvl=1;lvl<=25;lvl++){
+    var rowIdx=Math.floor((lvl-1)/5);
+    var colIdx=(lvl-1)%5;
+    var x=xPositions[rowIdx][colIdx];
+    var y=baseY-Math.floor((lvl-1)/5)*220-colIdx*20;
+    // Slight vertical offset per column for S-curve feel
+    var yOff=[0,-15,-5,-15,0][colIdx];
+    pos[lvl]={x:x,y:y+yOff};
+  }
+  return pos;
+})();
+
 function renderAdvMap(){
-  var path=document.getElementById('adv-map-path');
-  if(!path)return;
-  path.innerHTML='';
+  var canvas=document.getElementById('adv-map-canvas');
+  var svg=document.getElementById('adv-path-svg');
+  if(!canvas||!svg)return;
+  // Clear old nodes (not SVG)
+  var oldNodes=canvas.querySelectorAll('.adv-node,.adv-node-chest-icon');
+  oldNodes.forEach(function(n){n.remove();});
+
   var unlocked=getAdvUnlocked();
-  ADV_LEVELS.slice().reverse().forEach(function(lvl){
-    var node=document.createElement('div');
-    node.className='adv-node';
+  // Determine current level (first not completed)
+  var currentLevel=unlocked;
+
+  // Calculate total canvas height
+  var maxY=0;
+  for(var i=1;i<=25;i++){if(ADV_NODE_POSITIONS[i]&&ADV_NODE_POSITIONS[i].y>maxY)maxY=ADV_NODE_POSITIONS[i].y;}
+  var canvasH=maxY+80;
+  canvas.style.height=canvasH+'px';
+  svg.setAttribute('height',canvasH);
+  svg.setAttribute('viewBox','0 0 350 '+canvasH);
+
+  // Draw curved path through all nodes
+  var pathD='';
+  for(var i=1;i<=25;i++){
+    var p=ADV_NODE_POSITIONS[i];
+    var pNext=ADV_NODE_POSITIONS[i+1];
+    if(!pNext)break;
+    if(i===1){pathD='M '+p.x+' '+p.y;}
+    // Cubic bezier for smooth curves
+    var cp1x=p.x,cp1y=(p.y+pNext.y)/2;
+    var cp2x=pNext.x,cp2y=(p.y+pNext.y)/2;
+    pathD+=' C '+cp1x+','+cp1y+' '+cp2x+','+cp2y+' '+pNext.x+','+pNext.y;
+  }
+  // Shadow path
+  var shadowPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  shadowPath.setAttribute('d',pathD);
+  shadowPath.setAttribute('fill','none');
+  shadowPath.setAttribute('stroke','rgba(0,0,0,0.4)');
+  shadowPath.setAttribute('stroke-width','18');
+  shadowPath.setAttribute('stroke-linecap','round');
+  shadowPath.setAttribute('stroke-linejoin','round');
+  // Main path
+  var mainPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  mainPath.setAttribute('d',pathD);
+  mainPath.setAttribute('fill','none');
+  mainPath.setAttribute('stroke','rgba(60,40,100,0.9)');
+  mainPath.setAttribute('stroke-width','14');
+  mainPath.setAttribute('stroke-linecap','round');
+  mainPath.setAttribute('stroke-linejoin','round');
+  // Highlight path (completed portion)
+  var hlPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  hlPath.setAttribute('d',pathD);
+  hlPath.setAttribute('fill','none');
+  hlPath.setAttribute('stroke','rgba(255,255,255,0.08)');
+  hlPath.setAttribute('stroke-width','6');
+  hlPath.setAttribute('stroke-linecap','round');
+  hlPath.setAttribute('stroke-dasharray','1,20');
+  svg.innerHTML='';
+  svg.appendChild(shadowPath);
+  svg.appendChild(mainPath);
+  svg.appendChild(hlPath);
+
+  // Place chest icons beside path (levels 5,10,15,20,25 chest nodes replace regular)
+  var CHEST_LEVELS={5:1,10:1,15:1,20:1,25:1};
+
+  ADV_LEVELS.forEach(function(lvl){
+    var p=ADV_NODE_POSITIONS[lvl.id];
+    if(!p)return;
     var stars=getAdvStars(lvl.id);
     var isCompleted=stars>0;
-    var isCurrent=lvl.id===unlocked&&!isCompleted;
+    var isCurrent=lvl.id===currentLevel;
     var isLocked=lvl.id>unlocked;
     var isChest=!!lvl.chest;
     var chestClaimed=isChest&&isChestClaimed(lvl.id);
-    // Button
-    var btn=document.createElement('div');
-    btn.className='adv-node-btn'+(isCompleted?' completed':'')+(isCurrent?' current':'')+(isLocked?' locked':'')+(isChest?' chest':'');
-    if(isChest&&chestClaimed)btn.className+=' completed';
-    var icon=isChest?(chestClaimed?'✅':'🎁'):(isLocked?'🔒':(isCompleted?'✓':lvl.id));
-    btn.innerHTML='<div class="adv-node-icon">'+icon+'</div>'
+
+    // Chest levels: show chest icon, not a circle node
+    if(isChest){
+      var chestEl=document.createElement('div');
+      chestEl.className='adv-node chest-node'+(chestClaimed?' claimed':'');
+      chestEl.style.cssText='left:'+(p.x-28)+'px;top:'+(p.y-28)+'px;font-size:30px;';
+      chestEl.textContent=chestClaimed?'📭':'🎁';
+      if(!chestClaimed&&!isLocked){
+        (function(l){
+          chestEl.addEventListener('click',function(){startAdvLevel(l);});
+          chestEl.addEventListener('touchstart',function(e){e.preventDefault();startAdvLevel(l);},{passive:false});
+        })(lvl);
+      }
+      canvas.appendChild(chestEl);
+      return;
+    }
+
+    // Regular level node
+    var node=document.createElement('div');
+    var cls='adv-node';
+    if(isLocked)cls+=' locked';
+    else if(isCurrent)cls+=' current';
+    else if(isCompleted)cls+=' completed';
+    node.className=cls;
+    node.style.cssText='left:'+(p.x-32)+'px;top:'+(p.y-32)+'px;';
+    node.innerHTML='<div class="adv-node-num">'+(isCompleted?'✓':lvl.id)+'</div>'
       +'<div class="adv-node-stars">'
       +'<span class="adv-star'+(stars>=1?' lit':'')+'">★</span>'
       +'<span class="adv-star'+(stars>=2?' lit':'')+'">★</span>'
@@ -2943,22 +3053,56 @@ function renderAdvMap(){
       +'</div>';
     if(!isLocked){
       (function(l){
-        btn.addEventListener('click',function(){startAdvLevel(l);});
-        btn.addEventListener('touchstart',function(e){e.preventDefault();startAdvLevel(l);},{passive:false});
+        node.addEventListener('click',function(){selectAdvLevel(l);});
+        node.addEventListener('touchstart',function(e){e.preventDefault();selectAdvLevel(l);},{passive:false});
       })(lvl);
     }
-    // Info panel
-    var info=document.createElement('div');
-    info.className='adv-node-info';
-    info.innerHTML='<div class="adv-node-name">'+lvl.name+'</div>'
-      +'<div class="adv-node-obj">'+(isLocked?'🔒 Locked':lvl.objectives.map(function(o){return objLabel(o);}).join(' · '))+'</div>';
-    node.appendChild(btn);
-    node.appendChild(info);
-    path.appendChild(node);
-    // Scroll current level into view
-    if(isCurrent)setTimeout(function(){btn.scrollIntoView({behavior:'smooth',block:'center'});},300);
-    if(lvl.id===1)setTimeout(function(){var sc=document.getElementById('adv-map-scroll');if(sc)sc.scrollTop=sc.scrollHeight;},100);
+    canvas.appendChild(node);
+    // Scroll current into view
+    if(isCurrent){
+      setTimeout(function(){node.scrollIntoView({behavior:'smooth',block:'center'});},300);
+    }
   });
+
+  // Scroll to bottom (level 1)
+  setTimeout(function(){
+    var sc=document.getElementById('adv-map-scroll');
+    if(sc)sc.scrollTop=sc.scrollHeight;
+  },50);
+
+  // Update play button
+  updateAdvPlayBtn(currentLevel);
+  // Update timer
+  updateAdvTimer();
+}
+
+var _selectedAdvLevel=null;
+function selectAdvLevel(lvl){
+  _selectedAdvLevel=lvl;
+  updateAdvPlayBtn(lvl.id);
+  // Highlight selected node briefly
+  var nodes=document.querySelectorAll('.adv-node.selected');
+  nodes.forEach(function(n){n.classList.remove('selected');});
+}
+function updateAdvPlayBtn(levelId){
+  var btn=document.getElementById('adv-play-btn');
+  if(!btn)return;
+  var lvl=ADV_LEVELS.find(function(l){return l.id===levelId;});
+  _selectedAdvLevel=lvl||_selectedAdvLevel;
+  btn.textContent='Play Level '+(lvl?lvl.id:levelId);
+}
+function updateAdvTimer(){
+  var el=document.getElementById('adv-map-timer');
+  if(!el)return;
+  // Adventure event runs for 30 days from a fixed start
+  var start=new Date('2025-04-01').getTime();
+  var end=start+30*24*3600*1000;
+  var now=Date.now();
+  var left=end-now;
+  if(left<=0){el.textContent='Event Ended';return;}
+  var d=Math.floor(left/86400000);
+  var h=Math.floor((left%86400000)/3600000);
+  el.textContent='⏱ '+d+'d '+h+'h left';
 }
 function objLabel(o){
   if(o.type==='score')return '🎯 '+o.target.toLocaleString()+' pts';
@@ -3276,8 +3420,11 @@ loadUnlocks();
 initGame();
 window.addEventListener('resize',renderTray);
 
-document.getElementById('adv-map-close').addEventListener('click',closeAdvMap);
-document.getElementById('adv-hud-back').addEventListener('click',function(){if(advMode){advMode=false;hideAdvHUD();goHome();openAdvMap();}});
+document.getElementById('adv-map-back').addEventListener('click',closeAdvMap);
+document.getElementById('adv-play-btn').addEventListener('click',function(){if(_selectedAdvLevel)startAdvLevel(_selectedAdvLevel);});
+document.getElementById('adv-play-btn').addEventListener('touchstart',function(e){e.preventDefault();if(_selectedAdvLevel)startAdvLevel(_selectedAdvLevel);},{passive:false});
+document.getElementById('adv-awards-btn').addEventListener('click',function(){openChallengesModal();});
+document.getElementById('adv-hud-back').addEventListener('click',function(){if(advMode){advMode=false;hideAdvHUD();goHome();setTimeout(openAdvMap,300);}});
 </script>
 </body>
 </html>

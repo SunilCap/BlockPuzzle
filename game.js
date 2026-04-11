@@ -2148,26 +2148,131 @@ function closeAdvMap(){
   var screen=document.getElementById('adv-map-screen');
   if(screen)screen.classList.remove('show');
 }
+// S-curve node positions for 25 levels (x from left of 350px canvas, y top-down)
+// Levels rendered bottom-to-top: level 1 at bottom, 25 at top
+var ADV_NODE_POSITIONS=(function(){
+  // 5 rows of 5 levels, zigzag left-right
+  // Row heights spaced 180px apart, within 1200px canvas
+  var pos=[];
+  var xPositions=[
+    [50,120,190,260,320],  // row 1 (levels 1-5): left to right
+    [320,260,190,120,50],  // row 2 (levels 6-10): right to left
+    [50,120,190,260,320],  // row 3 (levels 11-15): left to right
+    [320,260,190,120,50],  // row 4 (levels 16-20): right to left
+    [50,120,190,260,320],  // row 5 (levels 21-25): left to right
+  ];
+  var baseY=1160; // level 1 y (bottom)
+  for(var lvl=1;lvl<=25;lvl++){
+    var rowIdx=Math.floor((lvl-1)/5);
+    var colIdx=(lvl-1)%5;
+    var x=xPositions[rowIdx][colIdx];
+    var y=baseY-Math.floor((lvl-1)/5)*220-colIdx*20;
+    // Slight vertical offset per column for S-curve feel
+    var yOff=[0,-15,-5,-15,0][colIdx];
+    pos[lvl]={x:x,y:y+yOff};
+  }
+  return pos;
+})();
+
 function renderAdvMap(){
-  var path=document.getElementById('adv-map-path');
-  if(!path)return;
-  path.innerHTML='';
+  var canvas=document.getElementById('adv-map-canvas');
+  var svg=document.getElementById('adv-path-svg');
+  if(!canvas||!svg)return;
+  // Clear old nodes (not SVG)
+  var oldNodes=canvas.querySelectorAll('.adv-node,.adv-node-chest-icon');
+  oldNodes.forEach(function(n){n.remove();});
+
   var unlocked=getAdvUnlocked();
-  ADV_LEVELS.slice().reverse().forEach(function(lvl){
-    var node=document.createElement('div');
-    node.className='adv-node';
+  // Determine current level (first not completed)
+  var currentLevel=unlocked;
+
+  // Calculate total canvas height
+  var maxY=0;
+  for(var i=1;i<=25;i++){if(ADV_NODE_POSITIONS[i]&&ADV_NODE_POSITIONS[i].y>maxY)maxY=ADV_NODE_POSITIONS[i].y;}
+  var canvasH=maxY+80;
+  canvas.style.height=canvasH+'px';
+  svg.setAttribute('height',canvasH);
+  svg.setAttribute('viewBox','0 0 350 '+canvasH);
+
+  // Draw curved path through all nodes
+  var pathD='';
+  for(var i=1;i<=25;i++){
+    var p=ADV_NODE_POSITIONS[i];
+    var pNext=ADV_NODE_POSITIONS[i+1];
+    if(!pNext)break;
+    if(i===1){pathD='M '+p.x+' '+p.y;}
+    // Cubic bezier for smooth curves
+    var cp1x=p.x,cp1y=(p.y+pNext.y)/2;
+    var cp2x=pNext.x,cp2y=(p.y+pNext.y)/2;
+    pathD+=' C '+cp1x+','+cp1y+' '+cp2x+','+cp2y+' '+pNext.x+','+pNext.y;
+  }
+  // Shadow path
+  var shadowPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  shadowPath.setAttribute('d',pathD);
+  shadowPath.setAttribute('fill','none');
+  shadowPath.setAttribute('stroke','rgba(0,0,0,0.4)');
+  shadowPath.setAttribute('stroke-width','18');
+  shadowPath.setAttribute('stroke-linecap','round');
+  shadowPath.setAttribute('stroke-linejoin','round');
+  // Main path
+  var mainPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  mainPath.setAttribute('d',pathD);
+  mainPath.setAttribute('fill','none');
+  mainPath.setAttribute('stroke','rgba(60,40,100,0.9)');
+  mainPath.setAttribute('stroke-width','14');
+  mainPath.setAttribute('stroke-linecap','round');
+  mainPath.setAttribute('stroke-linejoin','round');
+  // Highlight path (completed portion)
+  var hlPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  hlPath.setAttribute('d',pathD);
+  hlPath.setAttribute('fill','none');
+  hlPath.setAttribute('stroke','rgba(255,255,255,0.08)');
+  hlPath.setAttribute('stroke-width','6');
+  hlPath.setAttribute('stroke-linecap','round');
+  hlPath.setAttribute('stroke-dasharray','1,20');
+  svg.innerHTML='';
+  svg.appendChild(shadowPath);
+  svg.appendChild(mainPath);
+  svg.appendChild(hlPath);
+
+  // Place chest icons beside path (levels 5,10,15,20,25 chest nodes replace regular)
+  var CHEST_LEVELS={5:1,10:1,15:1,20:1,25:1};
+
+  ADV_LEVELS.forEach(function(lvl){
+    var p=ADV_NODE_POSITIONS[lvl.id];
+    if(!p)return;
     var stars=getAdvStars(lvl.id);
     var isCompleted=stars>0;
-    var isCurrent=lvl.id===unlocked&&!isCompleted;
+    var isCurrent=lvl.id===currentLevel;
     var isLocked=lvl.id>unlocked;
     var isChest=!!lvl.chest;
     var chestClaimed=isChest&&isChestClaimed(lvl.id);
-    // Button
-    var btn=document.createElement('div');
-    btn.className='adv-node-btn'+(isCompleted?' completed':'')+(isCurrent?' current':'')+(isLocked?' locked':'')+(isChest?' chest':'');
-    if(isChest&&chestClaimed)btn.className+=' completed';
-    var icon=isChest?(chestClaimed?'✅':'🎁'):(isLocked?'🔒':(isCompleted?'✓':lvl.id));
-    btn.innerHTML='<div class="adv-node-icon">'+icon+'</div>'
+
+    // Chest levels: show chest icon, not a circle node
+    if(isChest){
+      var chestEl=document.createElement('div');
+      chestEl.className='adv-node chest-node'+(chestClaimed?' claimed':'');
+      chestEl.style.cssText='left:'+(p.x-28)+'px;top:'+(p.y-28)+'px;font-size:30px;';
+      chestEl.textContent=chestClaimed?'📭':'🎁';
+      if(!chestClaimed&&!isLocked){
+        (function(l){
+          chestEl.addEventListener('click',function(){startAdvLevel(l);});
+          chestEl.addEventListener('touchstart',function(e){e.preventDefault();startAdvLevel(l);},{passive:false});
+        })(lvl);
+      }
+      canvas.appendChild(chestEl);
+      return;
+    }
+
+    // Regular level node
+    var node=document.createElement('div');
+    var cls='adv-node';
+    if(isLocked)cls+=' locked';
+    else if(isCurrent)cls+=' current';
+    else if(isCompleted)cls+=' completed';
+    node.className=cls;
+    node.style.cssText='left:'+(p.x-32)+'px;top:'+(p.y-32)+'px;';
+    node.innerHTML='<div class="adv-node-num">'+(isCompleted?'✓':lvl.id)+'</div>'
       +'<div class="adv-node-stars">'
       +'<span class="adv-star'+(stars>=1?' lit':'')+'">★</span>'
       +'<span class="adv-star'+(stars>=2?' lit':'')+'">★</span>'
@@ -2175,22 +2280,56 @@ function renderAdvMap(){
       +'</div>';
     if(!isLocked){
       (function(l){
-        btn.addEventListener('click',function(){startAdvLevel(l);});
-        btn.addEventListener('touchstart',function(e){e.preventDefault();startAdvLevel(l);},{passive:false});
+        node.addEventListener('click',function(){selectAdvLevel(l);});
+        node.addEventListener('touchstart',function(e){e.preventDefault();selectAdvLevel(l);},{passive:false});
       })(lvl);
     }
-    // Info panel
-    var info=document.createElement('div');
-    info.className='adv-node-info';
-    info.innerHTML='<div class="adv-node-name">'+lvl.name+'</div>'
-      +'<div class="adv-node-obj">'+(isLocked?'🔒 Locked':lvl.objectives.map(function(o){return objLabel(o);}).join(' · '))+'</div>';
-    node.appendChild(btn);
-    node.appendChild(info);
-    path.appendChild(node);
-    // Scroll current level into view
-    if(isCurrent)setTimeout(function(){btn.scrollIntoView({behavior:'smooth',block:'center'});},300);
-    if(lvl.id===1)setTimeout(function(){var sc=document.getElementById('adv-map-scroll');if(sc)sc.scrollTop=sc.scrollHeight;},100);
+    canvas.appendChild(node);
+    // Scroll current into view
+    if(isCurrent){
+      setTimeout(function(){node.scrollIntoView({behavior:'smooth',block:'center'});},300);
+    }
   });
+
+  // Scroll to bottom (level 1)
+  setTimeout(function(){
+    var sc=document.getElementById('adv-map-scroll');
+    if(sc)sc.scrollTop=sc.scrollHeight;
+  },50);
+
+  // Update play button
+  updateAdvPlayBtn(currentLevel);
+  // Update timer
+  updateAdvTimer();
+}
+
+var _selectedAdvLevel=null;
+function selectAdvLevel(lvl){
+  _selectedAdvLevel=lvl;
+  updateAdvPlayBtn(lvl.id);
+  // Highlight selected node briefly
+  var nodes=document.querySelectorAll('.adv-node.selected');
+  nodes.forEach(function(n){n.classList.remove('selected');});
+}
+function updateAdvPlayBtn(levelId){
+  var btn=document.getElementById('adv-play-btn');
+  if(!btn)return;
+  var lvl=ADV_LEVELS.find(function(l){return l.id===levelId;});
+  _selectedAdvLevel=lvl||_selectedAdvLevel;
+  btn.textContent='Play Level '+(lvl?lvl.id:levelId);
+}
+function updateAdvTimer(){
+  var el=document.getElementById('adv-map-timer');
+  if(!el)return;
+  // Adventure event runs for 30 days from a fixed start
+  var start=new Date('2025-04-01').getTime();
+  var end=start+30*24*3600*1000;
+  var now=Date.now();
+  var left=end-now;
+  if(left<=0){el.textContent='Event Ended';return;}
+  var d=Math.floor(left/86400000);
+  var h=Math.floor((left%86400000)/3600000);
+  el.textContent='⏱ '+d+'d '+h+'h left';
 }
 function objLabel(o){
   if(o.type==='score')return '🎯 '+o.target.toLocaleString()+' pts';
@@ -2508,5 +2647,8 @@ loadUnlocks();
 initGame();
 window.addEventListener('resize',renderTray);
 
-document.getElementById('adv-map-close').addEventListener('click',closeAdvMap);
-document.getElementById('adv-hud-back').addEventListener('click',function(){if(advMode){advMode=false;hideAdvHUD();goHome();openAdvMap();}});
+document.getElementById('adv-map-back').addEventListener('click',closeAdvMap);
+document.getElementById('adv-play-btn').addEventListener('click',function(){if(_selectedAdvLevel)startAdvLevel(_selectedAdvLevel);});
+document.getElementById('adv-play-btn').addEventListener('touchstart',function(e){e.preventDefault();if(_selectedAdvLevel)startAdvLevel(_selectedAdvLevel);},{passive:false});
+document.getElementById('adv-awards-btn').addEventListener('click',function(){openChallengesModal();});
+document.getElementById('adv-hud-back').addEventListener('click',function(){if(advMode){advMode=false;hideAdvHUD();goHome();setTimeout(openAdvMap,300);}});
