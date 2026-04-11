@@ -940,7 +940,8 @@ function slotInnerH(id){var e=document.getElementById(id);if(!e)return 50;var r=
 function fitCs(sh,W,H){var g=2,cc=sh[0].length,rr=sh.length;var byW=Math.floor((W-g*(cc-1))/cc);var byH=Math.floor((H-g*(rr-1))/rr);return Math.max(4,Math.min(byW,byH,16));}
 var cellEl=function(r,c){if(r<0||r>=ROWS||c<0||c>=COLS)return null;return document.getElementById('board').children[r*COLS+c];};
 function resetCell(r,c){var el=cellEl(r,c);if(el)el.className='cell'+(grid[r][c]?' on':'');}
-function syncBoard(){for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++)resetCell(r,c);}
+function syncBoard(){for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){resetCell(r,c);}
+  if(advMode)renderAdvCellStyles();}
 function clearGhost(){for(var i=0;i<ghostCells.length;i++){var g=ghostCells[i];resetCell(g.r,g.c);}ghostCells=[];snapPos=null;}
 function trimShape(s){var r0=s.length,r1=-1,c0=s[0].length,c1=-1;for(var r=0;r<s.length;r++)for(var c=0;c<s[r].length;c++)if(s[r][c]){r0=Math.min(r0,r);r1=Math.max(r1,r);c0=Math.min(c0,c);c1=Math.max(c1,c);}if(r1<0)return s;return s.slice(r0,r1+1).map(function(row){return row.slice(c0,c1+1);});}
 function canPlace(sh,sr,sc){for(var r=0;r<sh.length;r++)for(var c=0;c<sh[r].length;c++)if(sh[r][c]){var gr=sr+r,gc=sc+c;if(gr<0||gr>=ROWS||gc<0||gc>=COLS||grid[gr][gc])return false;}return true;}
@@ -2152,7 +2153,7 @@ function renderAdvMap(){
   if(!path)return;
   path.innerHTML='';
   var unlocked=getAdvUnlocked();
-  ADV_LEVELS.forEach(function(lvl){
+  ADV_LEVELS.slice().reverse().forEach(function(lvl){
     var node=document.createElement('div');
     node.className='adv-node';
     var stars=getAdvStars(lvl.id);
@@ -2188,6 +2189,7 @@ function renderAdvMap(){
     path.appendChild(node);
     // Scroll current level into view
     if(isCurrent)setTimeout(function(){btn.scrollIntoView({behavior:'smooth',block:'center'});},300);
+    if(lvl.id===1)setTimeout(function(){var sc=document.getElementById('adv-map-scroll');if(sc)sc.scrollTop=sc.scrollHeight;},100);
   });
 }
 function objLabel(o){
@@ -2219,24 +2221,25 @@ function startAdvLevel(lvl){
       else if(v===1){advBlockGrid[r][c]=1;} // normal block
     }
   }
-  // Init game with pre-filled grid
+  // Init game
   isChallenge=false;
   initGame();
-  // Apply pre-filled board after initGame resets grid
-  for(var r=0;r<10;r++){
-    for(var c=0;c<10;c++){
-      var v=lvl.grid[r][c];
-      if(v>=1)grid[r][c]=1; // all pre-fills count as filled
-    }
-  }
-  syncBoard();
-  renderAdvCellStyles();
-  renderAdvHUD();
-  // Show game screen
   goToGame();
-  // Override the score display to show level name
-  var sb=document.getElementById('adv-level-name');
-  if(sb)sb.textContent='Level '+lvl.id+': '+lvl.name;
+  // Apply pre-filled board AFTER goToGame so DOM cells exist
+  setTimeout(function(){
+    // Fill grid with level data
+    for(var r=0;r<10;r++){
+      for(var c=0;c<10;c++){
+        var v=lvl.grid[r][c];
+        if(v>=1)grid[r][c]=1;
+      }
+    }
+    syncBoard();
+    renderAdvCellStyles();
+    renderAdvHUD();
+    var nm=document.getElementById('adv-level-name');
+    if(nm)nm.textContent='Level '+lvl.id+': '+lvl.name;
+  },80);
 }
 
 // Apply visual ice/block styling to cells
@@ -2262,6 +2265,9 @@ function renderAdvHUD(){
   if(!hud||!objBar)return;
   hud.style.display='flex';
   objBar.style.display='flex';
+  // Hide normal obj-bar and chest-bar in adv mode to save space
+  var ob=document.getElementById('obj-bar');if(ob)ob.style.display='none';
+  var cb=document.getElementById('chest-bar');if(cb)cb.style.display='none';
   objBar.innerHTML='';
   advLevel.objectives.forEach(function(o){
     var prog=advObjProgress[o.type]||0;
@@ -2284,6 +2290,8 @@ function hideAdvHUD(){
   var obj=document.getElementById('adv-objectives');
   if(hud)hud.style.display='none';
   if(obj)obj.style.display='none';
+  var ob=document.getElementById('obj-bar');if(ob)ob.style.display='';
+  var cb=document.getElementById('chest-bar');if(cb)cb.style.display='';
 }
 
 // ── Objective tracking (hooked into game events) ──
