@@ -685,6 +685,8 @@ var chestGems=0; // current gems in chest
   document.getElementById('lb-htp-close').addEventListener('click',function(){closeModal('lb-htp-modal');});
   document.getElementById('lb-htp-modal').addEventListener('click',function(e){if(e.target===this)closeModal('lb-htp-modal');});
   document.getElementById('lb-challenges-btn').addEventListener('click',openChallengesModal);
+  document.getElementById('lb-adv-btn').addEventListener('click',function(){openAdvMap();});
+  document.getElementById('lb-adv-btn').addEventListener('touchstart',function(e){e.preventDefault();openAdvMap();},{passive:false});
   document.getElementById('lb-chest').addEventListener('click',openChest);
   document.getElementById('lb-chest').addEventListener('touchstart',function(e){e.preventDefault();openChest();},{passive:false});
   document.getElementById('lb-quests-btn').addEventListener('click',function(){renderQuestsModal();openModal('quests-modal');});
@@ -735,6 +737,7 @@ function goToGame(){
 function goHome(){
   isChallenge=false;
   challengeEnding=false;
+  if(advMode)resetAdvMode();
   if(typeof blastMode!=='undefined'&&blastMode)cancelBlast();
   // Safety: clear all stuck states
   document.body.classList.remove('modal-open');
@@ -1236,6 +1239,9 @@ function clearLines(onDone){
   addGems(n*5+(n>1?(n-1)*3:0)+(combo>1?(combo-1)*3:0)); // 5 gems/line, bonuses for multi+combo
   updateQuestProgress('lines',n);
   updateQuestProgress('combo',combo);
+  advTrackLines(n);
+  advTrackCombo(combo);
+  advTrackIce(rows,cols);
   if(combo>1){showComboSplash(combo);}else{SFX.clear();}
   try{var tl=parseInt(_ls.getItem('bp_tot_lines')||'0')||0;_ls.setItem('bp_tot_lines',String(tl+n));var bc=parseInt(_ls.getItem('bp_best_combo')||'0')||0;if(combo>bc)_ls.setItem('bp_best_combo',String(combo));}catch(e){}
 
@@ -1282,6 +1288,8 @@ function clearLines(onDone){
 
   var totalAnim=Math.round(4.5)*STAGGER+320+60; // max dist stagger + anim duration
   setTimeout(function(){
+    // Track adv block clears before zeroing
+    if(advMode){rows.forEach(function(r){for(var c=0;c<COLS;c++)advTrackClearBlock(r,c);});cols.forEach(function(c){for(var r=0;r<ROWS;r++)advTrackClearBlock(r,c);});}
     rows.forEach(function(r){grid[r].fill(0);});
     cols.forEach(function(c){for(var r=0;r<ROWS;r++)grid[r][c]=0;});
     syncBoard();
@@ -1317,6 +1325,7 @@ function showSavePrompt(pArr){
 }
 function hideSavePrompt(){document.getElementById('save-prompt').classList.remove('show');}
 function triggerGameOver(){
+  if(advMode&&!advLevelComplete){showAdvFailed();return;}
   hideSavePrompt();
   // Challenge game over mid-challenge — just end it with current score
   if(isChallenge){finishChallenge();return;}
@@ -1368,6 +1377,7 @@ function updateScore(n){
   document.getElementById('gbc').textContent=best;
   checkMilestones();
   updateQuestProgress('score',score);
+  advTrackScore(score);
   checkAchievements();
 }
 
@@ -1676,12 +1686,789 @@ function openChest(){
   updateLobbyStats();
 }
 
+// ══════════════════════════════════════════════
+//  ADVENTURE MODE — 25 LEVELS
+// ══════════════════════════════════════════════
+// Grid cell values:
+//   0 = empty
+//   1 = normal block (must be cleared by line clear)
+//   2 = ice stage 1 (1 line clear to thaw → becomes normal)
+//   3 = ice stage 2 (2 line clears to thaw)
+//   4 = ice stage 3 (3 line clears to thaw)
+// Objective types: 'score','clear_blocks','break_ice','combo','lines'
+
+var ADV_LEVELS=[
+  // ── WORLD 1: Warm Up (1-5) ──
+  {id:1,name:'Warm Up',
+   grid:[
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [1,1,0,0,0,0,0,0,1,1],
+     [1,1,0,0,0,0,0,0,1,1],
+   ],
+   objectives:[{type:'score',target:500},{type:'clear_blocks',target:8}],
+   stars:[300,600,1000]},
+
+  {id:2,name:'Corner Clear',
+   grid:[
+     [1,1,0,0,0,0,0,0,1,1],
+     [1,1,0,0,0,0,0,0,1,1],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [1,1,0,0,0,0,0,0,1,1],
+     [1,1,0,0,0,0,0,0,1,1],
+   ],
+   objectives:[{type:'clear_blocks',target:12},{type:'score',target:800}],
+   stars:[500,900,1400]},
+
+  {id:3,name:'The Cross',
+   grid:[
+     [0,0,0,0,1,0,0,0,0,0],
+     [0,0,0,0,1,0,0,0,0,0],
+     [0,0,0,0,1,0,0,0,0,0],
+     [1,1,1,1,1,1,1,1,1,0],
+     [0,0,0,0,1,0,0,0,0,0],
+     [0,0,0,0,1,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'clear_blocks',target:15},{type:'lines',target:2}],
+   stars:[600,1100,1800]},
+
+  {id:4,name:'Diagonal',
+   grid:[
+     [1,0,0,0,0,0,0,0,0,0],
+     [0,1,0,0,0,0,0,0,0,0],
+     [0,0,1,0,0,0,0,0,0,0],
+     [0,0,0,1,0,0,0,0,0,0],
+     [0,0,0,0,1,0,0,0,0,0],
+     [0,0,0,0,0,1,0,0,0,0],
+     [0,0,0,0,0,0,1,0,0,0],
+     [0,0,0,0,0,0,0,1,0,0],
+     [0,0,0,0,0,0,0,0,1,0],
+     [0,0,0,0,0,0,0,0,0,1],
+   ],
+   objectives:[{type:'clear_blocks',target:10},{type:'score',target:1000}],
+   stars:[700,1200,2000]},
+
+  {id:5,name:'CHEST I 🪙',chest:true,
+   grid:[
+     [1,0,1,0,1,0,1,0,1,0],
+     [0,1,0,1,0,1,0,1,0,1],
+     [1,0,1,0,1,0,1,0,1,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'clear_blocks',target:15},{type:'lines',target:3}],
+   stars:[800,1500,2500],
+   chestReward:{stars:20,trophy:null}},
+
+  // ── WORLD 2: Ice Age (6-10) ──
+  {id:6,name:'First Frost',
+   grid:[
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,2,2,2,2,2,2,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,2,2,2,2,2,2,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:6},{type:'score',target:1200}],
+   stars:[900,1600,2600]},
+
+  {id:7,name:'Ice Border',
+   grid:[
+     [2,2,2,2,2,2,2,2,2,2],
+     [2,0,0,0,0,0,0,0,0,2],
+     [2,0,0,0,0,0,0,0,0,2],
+     [2,0,0,0,0,0,0,0,0,2],
+     [2,0,0,0,0,0,0,0,0,2],
+     [2,0,0,0,0,0,0,0,0,2],
+     [2,0,0,0,0,0,0,0,0,2],
+     [2,0,0,0,0,0,0,0,0,2],
+     [2,0,0,0,0,0,0,0,0,2],
+     [2,2,2,2,2,2,2,2,2,2],
+   ],
+   objectives:[{type:'break_ice',target:16},{type:'lines',target:4}],
+   stars:[1100,2000,3200]},
+
+  {id:8,name:'Deep Freeze',
+   grid:[
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,3,3,3,0,0,3,3,3,0],
+     [0,3,0,3,0,0,3,0,3,0],
+     [0,3,3,3,0,0,3,3,3,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,3,3,3,0,0,3,3,3,0],
+     [0,3,0,3,0,0,3,0,3,0],
+     [0,3,3,3,0,0,3,3,3,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:16},{type:'score',target:1800}],
+   stars:[1200,2200,3500]},
+
+  {id:9,name:'Glacier',
+   grid:[
+     [4,4,4,4,4,0,0,0,0,0],
+     [4,4,4,4,4,0,0,0,0,0],
+     [4,4,4,4,4,0,0,0,0,0],
+     [0,0,0,0,0,4,4,4,4,4],
+     [0,0,0,0,0,4,4,4,4,4],
+     [0,0,0,0,0,4,4,4,4,4],
+     [4,4,4,4,4,0,0,0,0,0],
+     [4,4,4,4,4,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:24},{type:'combo',target:3}],
+   stars:[1400,2600,4000]},
+
+  {id:10,name:'CHEST II 🥈',chest:true,
+   grid:[
+     [4,4,0,0,4,4,0,0,4,4],
+     [4,4,0,0,4,4,0,0,4,4],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,4,4,0,0,4,4,0,0],
+     [0,0,4,4,0,0,4,4,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [4,4,0,0,4,4,0,0,4,4],
+     [4,4,0,0,4,4,0,0,4,4],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:20},{type:'score',target:2500}],
+   stars:[1600,3000,5000],
+   chestReward:{stars:35,trophy:'bronze'}},
+
+  // ── WORLD 3: Puzzle Master (11-15) ──
+  {id:11,name:'Checkers',
+   grid:[
+     [1,0,1,0,1,0,1,0,1,0],
+     [0,1,0,1,0,1,0,1,0,1],
+     [1,0,1,0,1,0,1,0,1,0],
+     [0,1,0,1,0,1,0,1,0,1],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'clear_blocks',target:20},{type:'lines',target:4}],
+   stars:[1800,3200,5200]},
+
+  {id:12,name:'Frozen Checkers',
+   grid:[
+     [2,0,2,0,2,0,2,0,2,0],
+     [0,3,0,3,0,3,0,3,0,3],
+     [2,0,2,0,2,0,2,0,2,0],
+     [0,3,0,3,0,3,0,3,0,3],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:20},{type:'score',target:3000}],
+   stars:[2000,3600,5800]},
+
+  {id:13,name:'The Wall',
+   grid:[
+     [3,3,3,3,3,3,3,3,3,3],
+     [3,3,3,3,3,3,3,3,3,3],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:20},{type:'combo',target:4}],
+   stars:[2200,4000,6500]},
+
+  {id:14,name:'Diamond Mine',
+   grid:[
+     [0,0,0,0,1,1,0,0,0,0],
+     [0,0,0,1,2,2,1,0,0,0],
+     [0,0,1,2,3,3,2,1,0,0],
+     [0,1,2,3,4,4,3,2,1,0],
+     [1,2,3,4,0,0,4,3,2,1],
+     [1,2,3,4,0,0,4,3,2,1],
+     [0,1,2,3,4,4,3,2,1,0],
+     [0,0,1,2,3,3,2,1,0,0],
+     [0,0,0,1,2,2,1,0,0,0],
+     [0,0,0,0,1,1,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:30},{type:'score',target:4000}],
+   stars:[2500,4500,7000]},
+
+  {id:15,name:'CHEST III 🥇',chest:true,
+   grid:[
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,0,0,0,0,0,0,0,0,4],
+     [4,0,3,3,3,3,3,3,0,4],
+     [4,0,3,0,0,0,0,3,0,4],
+     [4,0,3,0,2,2,0,3,0,4],
+     [4,0,3,0,2,2,0,3,0,4],
+     [4,0,3,0,0,0,0,3,0,4],
+     [4,0,3,3,3,3,3,3,0,4],
+     [4,0,0,0,0,0,0,0,0,4],
+     [4,4,4,4,4,4,4,4,4,4],
+   ],
+   objectives:[{type:'break_ice',target:40},{type:'score',target:5000}],
+   stars:[3000,5500,8500],
+   chestReward:{stars:50,trophy:'silver'}},
+
+  // ── WORLD 4: Extreme (16-20) ──
+  {id:16,name:'Blizzard',
+   grid:[
+     [4,3,2,1,0,0,1,2,3,4],
+     [3,4,3,2,0,0,2,3,4,3],
+     [2,3,4,3,0,0,3,4,3,2],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:24},{type:'combo',target:3},{type:'score',target:4500}],
+   stars:[3200,5800,9000]},
+
+  {id:17,name:'Fortress',
+   grid:[
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,3,3,3,3,3,3,3,3,4],
+     [4,3,2,2,2,2,2,2,3,4],
+     [4,3,2,0,0,0,0,2,3,4],
+     [4,3,2,0,0,0,0,2,3,4],
+     [4,3,2,0,0,0,0,2,3,4],
+     [4,3,2,0,0,0,0,2,3,4],
+     [4,3,2,2,2,2,2,2,3,4],
+     [4,3,3,3,3,3,3,3,3,4],
+     [4,4,4,4,4,4,4,4,4,4],
+   ],
+   objectives:[{type:'break_ice',target:60},{type:'score',target:6000}],
+   stars:[3800,7000,11000]},
+
+  {id:18,name:'X Marks',
+   grid:[
+     [4,0,0,0,3,3,0,0,0,4],
+     [0,4,0,3,0,0,3,0,4,0],
+     [0,0,4,0,0,0,0,4,0,0],
+     [0,3,0,4,0,0,4,0,3,0],
+     [3,0,0,0,4,4,0,0,0,3],
+     [3,0,0,0,4,4,0,0,0,3],
+     [0,3,0,4,0,0,4,0,3,0],
+     [0,0,4,0,0,0,0,4,0,0],
+     [0,4,0,3,0,0,3,0,4,0],
+     [4,0,0,0,3,3,0,0,0,4],
+   ],
+   objectives:[{type:'break_ice',target:40},{type:'lines',target:8},{type:'score',target:5500}],
+   stars:[4000,7500,12000]},
+
+  {id:19,name:'Avalanche',
+   grid:[
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [3,3,3,3,3,3,3,3,3,3],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:30},{type:'combo',target:5},{type:'score',target:7000}],
+   stars:[4500,8000,13000]},
+
+  {id:20,name:'CHEST IV 💎',chest:true,
+   grid:[
+     [4,4,3,3,2,2,1,1,0,0],
+     [4,4,3,3,2,2,1,1,0,0],
+     [4,4,3,3,2,2,1,1,0,0],
+     [4,4,3,3,2,2,0,0,0,0],
+     [4,4,3,3,0,0,0,0,0,0],
+     [4,4,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+     [0,0,0,0,0,0,0,0,0,0],
+   ],
+   objectives:[{type:'break_ice',target:40},{type:'score',target:8000}],
+   stars:[5000,9000,14000],
+   chestReward:{stars:75,trophy:'gold'}},
+
+  // ── WORLD 5: Legend (21-25) ──
+  {id:21,name:'Frozen Hell',
+   grid:[
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,3,3,3,3,3,3,4,4],
+     [4,3,4,2,2,2,2,4,3,4],
+     [4,3,2,4,1,1,4,2,3,4],
+     [4,3,2,1,4,4,1,2,3,4],
+     [4,3,2,1,4,4,1,2,3,4],
+     [4,3,2,4,1,1,4,2,3,4],
+     [4,3,4,2,2,2,2,4,3,4],
+     [4,4,3,3,3,3,3,3,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+   ],
+   objectives:[{type:'break_ice',target:60},{type:'score',target:10000}],
+   stars:[6000,10000,16000]},
+
+  {id:22,name:'The Gauntlet',
+   grid:[
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,0,0,0,0,0,0,0,0,4],
+     [4,0,4,4,0,0,4,4,0,4],
+     [4,0,4,4,0,0,4,4,0,4],
+     [4,0,0,0,4,4,0,0,0,4],
+     [4,0,0,0,4,4,0,0,0,4],
+     [4,0,4,4,0,0,4,4,0,4],
+     [4,0,4,4,0,0,4,4,0,4],
+     [4,0,0,0,0,0,0,0,0,4],
+     [4,4,4,4,4,4,4,4,4,4],
+   ],
+   objectives:[{type:'break_ice',target:64},{type:'combo',target:4},{type:'score',target:9000}],
+   stars:[6500,11000,17000]},
+
+  {id:23,name:'Absolute Zero',
+   grid:[
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,0,0,0,0,4,4,4],
+     [4,4,4,0,0,0,0,4,4,4],
+     [4,4,4,0,0,0,0,4,4,4],
+     [4,4,4,0,0,0,0,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+   ],
+   objectives:[{type:'break_ice',target:84},{type:'lines',target:10},{type:'score',target:12000}],
+   stars:[7500,13000,20000]},
+
+  {id:24,name:'Endgame',
+   grid:[
+     [4,3,4,3,4,3,4,3,4,3],
+     [3,4,3,4,3,4,3,4,3,4],
+     [4,3,4,3,4,3,4,3,4,3],
+     [3,4,3,4,3,4,3,4,3,4],
+     [4,3,4,3,0,0,3,4,3,4],
+     [3,4,3,4,0,0,4,3,4,3],
+     [4,3,4,3,4,3,4,3,4,3],
+     [3,4,3,4,3,4,3,4,3,4],
+     [4,3,4,3,4,3,4,3,4,3],
+     [3,4,3,4,3,4,3,4,3,4],
+   ],
+   objectives:[{type:'break_ice',target:96},{type:'combo',target:5},{type:'score',target:15000}],
+   stars:[8500,15000,22000]},
+
+  {id:25,name:'CHEST V 👑',chest:true,
+   grid:[
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+     [4,4,4,4,4,4,4,4,4,4],
+   ],
+   objectives:[{type:'break_ice',target:100},{type:'score',target:20000},{type:'combo',target:5}],
+   stars:[10000,18000,28000],
+   chestReward:{stars:100,trophy:'campaign_master'}},
+];
+
+// ══════════════════════════════════════════════
+//  ADVENTURE MODE ENGINE
+// ══════════════════════════════════════════════
+var advMode=false;
+var advLevel=null;       // current level data
+var advIceGrid=[];       // ice stage per cell [row][col]
+var advBlockGrid=[];     // pre-placed blocks [row][col]
+var advObjProgress={};   // progress per objective type
+var advLevelComplete=false;
+
+// ── Save/Load progress ──
+function getAdvProgress(){
+  try{return JSON.parse(localStorage.getItem('bp_adv_progress')||'{}');}catch(e){return{};}
+}
+function saveAdvProgress(p){try{localStorage.setItem('bp_adv_progress',JSON.stringify(p));}catch(e){}}
+function getAdvUnlocked(){var p=getAdvProgress();return p.unlocked||1;}
+function getAdvStars(levelId){var p=getAdvProgress();return (p.stars&&p.stars[levelId])||0;}
+function saveAdvLevelResult(levelId,stars){
+  var p=getAdvProgress();
+  p.stars=p.stars||{};
+  p.stars[levelId]=Math.max(p.stars[levelId]||0,stars);
+  // Unlock next level
+  p.unlocked=Math.max(p.unlocked||1,levelId+1);
+  // Mark chest claimed
+  saveAdvProgress(p);
+}
+function isChestClaimed(levelId){var p=getAdvProgress();return !!(p.chestsClaimed&&p.chestsClaimed[levelId]);}
+function markChestClaimed(levelId){var p=getAdvProgress();p.chestsClaimed=p.chestsClaimed||{};p.chestsClaimed[levelId]=true;saveAdvProgress(p);}
+
+// ── Map screen ──
+function openAdvMap(){
+  var screen=document.getElementById('adv-map-screen');
+  if(screen){screen.classList.add('show');renderAdvMap();}
+}
+function closeAdvMap(){
+  var screen=document.getElementById('adv-map-screen');
+  if(screen)screen.classList.remove('show');
+}
+function renderAdvMap(){
+  var path=document.getElementById('adv-map-path');
+  if(!path)return;
+  path.innerHTML='';
+  var unlocked=getAdvUnlocked();
+  ADV_LEVELS.forEach(function(lvl){
+    var node=document.createElement('div');
+    node.className='adv-node';
+    var stars=getAdvStars(lvl.id);
+    var isCompleted=stars>0;
+    var isCurrent=lvl.id===unlocked&&!isCompleted;
+    var isLocked=lvl.id>unlocked;
+    var isChest=!!lvl.chest;
+    var chestClaimed=isChest&&isChestClaimed(lvl.id);
+    // Button
+    var btn=document.createElement('div');
+    btn.className='adv-node-btn'+(isCompleted?' completed':'')+(isCurrent?' current':'')+(isLocked?' locked':'')+(isChest?' chest':'');
+    if(isChest&&chestClaimed)btn.className+=' completed';
+    var icon=isChest?(chestClaimed?'✅':'🎁'):(isLocked?'🔒':(isCompleted?'✓':lvl.id));
+    btn.innerHTML='<div class="adv-node-icon">'+icon+'</div>'
+      +'<div class="adv-node-stars">'
+      +'<span class="adv-star'+(stars>=1?' lit':'')+'">★</span>'
+      +'<span class="adv-star'+(stars>=2?' lit':'')+'">★</span>'
+      +'<span class="adv-star'+(stars>=3?' lit':'')+'">★</span>'
+      +'</div>';
+    if(!isLocked){
+      (function(l){
+        btn.addEventListener('click',function(){startAdvLevel(l);});
+        btn.addEventListener('touchstart',function(e){e.preventDefault();startAdvLevel(l);},{passive:false});
+      })(lvl);
+    }
+    // Info panel
+    var info=document.createElement('div');
+    info.className='adv-node-info';
+    info.innerHTML='<div class="adv-node-name">'+lvl.name+'</div>'
+      +'<div class="adv-node-obj">'+(isLocked?'🔒 Locked':lvl.objectives.map(function(o){return objLabel(o);}).join(' · '))+'</div>';
+    node.appendChild(btn);
+    node.appendChild(info);
+    path.appendChild(node);
+    // Scroll current level into view
+    if(isCurrent)setTimeout(function(){btn.scrollIntoView({behavior:'smooth',block:'center'});},300);
+  });
+}
+function objLabel(o){
+  if(o.type==='score')return '🎯 '+o.target.toLocaleString()+' pts';
+  if(o.type==='clear_blocks')return '🟪 Clear '+o.target;
+  if(o.type==='break_ice')return '❄️ Break '+o.target+' ice';
+  if(o.type==='combo')return '🔥 Combo ×'+o.target;
+  if(o.type==='lines')return '✨ '+o.target+' lines';
+  return '';
+}
+
+// ── Start a level ──
+function startAdvLevel(lvl){
+  closeAdvMap();
+  advMode=true;
+  advLevel=lvl;
+  advLevelComplete=false;
+  // Init objective progress
+  advObjProgress={};
+  lvl.objectives.forEach(function(o){advObjProgress[o.type]=0;});
+  // Build ice/block grids
+  advIceGrid=[];advBlockGrid=[];
+  for(var r=0;r<10;r++){
+    advIceGrid.push([0,0,0,0,0,0,0,0,0,0]);
+    advBlockGrid.push([0,0,0,0,0,0,0,0,0,0]);
+    for(var c=0;c<10;c++){
+      var v=lvl.grid[r][c];
+      if(v>=2){advIceGrid[r][c]=v;}      // ice
+      else if(v===1){advBlockGrid[r][c]=1;} // normal block
+    }
+  }
+  // Init game with pre-filled grid
+  isChallenge=false;
+  initGame();
+  // Apply pre-filled board after initGame resets grid
+  for(var r=0;r<10;r++){
+    for(var c=0;c<10;c++){
+      var v=lvl.grid[r][c];
+      if(v>=1)grid[r][c]=1; // all pre-fills count as filled
+    }
+  }
+  syncBoard();
+  renderAdvCellStyles();
+  renderAdvHUD();
+  // Show game screen
+  goToGame();
+  // Override the score display to show level name
+  var sb=document.getElementById('adv-level-name');
+  if(sb)sb.textContent='Level '+lvl.id+': '+lvl.name;
+}
+
+// Apply visual ice/block styling to cells
+function renderAdvCellStyles(){
+  if(!advMode)return;
+  for(var r=0;r<10;r++){
+    for(var c=0;c<10;c++){
+      var el=cellEl(r,c);if(!el)continue;
+      el.classList.remove('ice-1','ice-2','ice-3','ice-4','adv-block');
+      var ice=advIceGrid[r][c];
+      var blk=advBlockGrid[r][c];
+      if(ice>=2)el.classList.add('ice-'+ice);
+      else if(blk)el.classList.add('adv-block');
+    }
+  }
+}
+
+// ── HUD ──
+function renderAdvHUD(){
+  if(!advMode||!advLevel)return;
+  var hud=document.getElementById('adv-hud');
+  var objBar=document.getElementById('adv-objectives');
+  if(!hud||!objBar)return;
+  hud.style.display='flex';
+  objBar.style.display='flex';
+  objBar.innerHTML='';
+  advLevel.objectives.forEach(function(o){
+    var prog=advObjProgress[o.type]||0;
+    var done=prog>=o.target;
+    var chip=document.createElement('div');
+    chip.className='adv-obj-chip'+(done?' done':'');
+    chip.innerHTML='<span class="obj-icon">'+objIcon(o.type)+'</span>'
+      +'<span class="adv-obj-progress">'+Math.min(prog,o.target)+'/'+o.target+'</span>';
+    objBar.appendChild(chip);
+  });
+  // Update level name in HUD
+  var nm=document.getElementById('adv-level-name');
+  if(nm)nm.textContent='Level '+advLevel.id+': '+advLevel.name;
+}
+function objIcon(type){
+  return{score:'🎯',clear_blocks:'🟪',break_ice:'❄️',combo:'🔥',lines:'✨'}[type]||'📋';
+}
+function hideAdvHUD(){
+  var hud=document.getElementById('adv-hud');
+  var obj=document.getElementById('adv-objectives');
+  if(hud)hud.style.display='none';
+  if(obj)obj.style.display='none';
+}
+
+// ── Objective tracking (hooked into game events) ──
+function advTrackScore(s){
+  if(!advMode||!advLevel)return;
+  advObjProgress['score']=Math.max(advObjProgress['score']||0,s);
+  renderAdvHUD();checkAdvComplete();
+}
+function advTrackLines(n){
+  if(!advMode||!advLevel)return;
+  advObjProgress['lines']=(advObjProgress['lines']||0)+n;
+  renderAdvHUD();checkAdvComplete();
+}
+function advTrackCombo(c){
+  if(!advMode||!advLevel)return;
+  advObjProgress['combo']=Math.max(advObjProgress['combo']||0,c);
+  renderAdvHUD();checkAdvComplete();
+}
+function advTrackClearBlock(r,c){
+  if(!advMode)return;
+  if(advBlockGrid[r]&&advBlockGrid[r][c]===1){
+    advBlockGrid[r][c]=0;
+    advObjProgress['clear_blocks']=(advObjProgress['clear_blocks']||0)+1;
+    renderAdvHUD();checkAdvComplete();
+  }
+}
+function advTrackIce(rows,cols){
+  if(!advMode)return;
+  var cleared=false;
+  // Check each iced cell — if its row or col was cleared, reduce ice
+  for(var r=0;r<10;r++){
+    for(var c=0;c<10;c++){
+      var ice=advIceGrid[r][c];
+      if(ice<2)continue;
+      var rowCleared=rows.indexOf(r)>=0;
+      var colCleared=cols.indexOf(c)>=0;
+      if(rowCleared||colCleared){
+        advIceGrid[r][c]=ice-1;
+        if(advIceGrid[r][c]===1){
+          // Became a normal block
+          advBlockGrid[r][c]=1;
+          advIceGrid[r][c]=0;
+        }
+        cleared=true;
+      }
+    }
+  }
+  if(cleared){renderAdvCellStyles();renderAdvHUD();}
+}
+
+// ── Check if all objectives met ──
+function checkAdvComplete(){
+  if(!advMode||!advLevel||advLevelComplete)return;
+  var allDone=advLevel.objectives.every(function(o){
+    return (advObjProgress[o.type]||0)>=o.target;
+  });
+  if(allDone){
+    advLevelComplete=true;
+    setTimeout(showAdvComplete,600);
+  }
+}
+function showAdvComplete(){
+  // Calculate stars
+  var stars=0;
+  if(score>=advLevel.stars[0])stars=1;
+  if(score>=advLevel.stars[1])stars=2;
+  if(score>=advLevel.stars[2])stars=3;
+  saveAdvLevelResult(advLevel.id,stars);
+  // Show modal
+  var modal=document.getElementById('adv-complete-modal');
+  document.getElementById('adv-complete-score').textContent=score.toLocaleString()+' pts';
+  // Animate stars
+  var starEls=document.querySelectorAll('.adv-cstar');
+  starEls.forEach(function(el){el.classList.remove('lit');});
+  for(var i=0;i<stars;i++){
+    (function(idx){setTimeout(function(){if(starEls[idx])starEls[idx].classList.add('lit');SFX.achieve();},idx*400+300);})(i);
+  }
+  // Wire buttons
+  var nextBtn=document.getElementById('adv-complete-next');
+  var mapBtn=document.getElementById('adv-complete-map');
+  var nextLvl=ADV_LEVELS.find(function(l){return l.id===advLevel.id+1;});
+  if(nextBtn){
+    nextBtn.style.display=nextLvl?'block':'none';
+    nextBtn.onclick=function(){
+      modal.classList.remove('show');
+      // Show chest reward if this level has one
+      if(advLevel.chest&&!isChestClaimed(advLevel.id)){
+        markChestClaimed(advLevel.id);
+        showAdvChest(advLevel.chestReward,function(){
+          if(nextLvl)startAdvLevel(nextLvl);
+          else{advMode=false;hideAdvHUD();openAdvMap();}
+        });
+      } else {
+        if(nextLvl)startAdvLevel(nextLvl);
+        else{advMode=false;hideAdvHUD();openAdvMap();}
+      }
+    };
+  }
+  if(mapBtn){
+    mapBtn.onclick=function(){
+      modal.classList.remove('show');
+      if(advLevel.chest&&!isChestClaimed(advLevel.id)){
+        markChestClaimed(advLevel.id);
+        showAdvChest(advLevel.chestReward,function(){advMode=false;hideAdvHUD();goHome();openAdvMap();});
+      } else {advMode=false;hideAdvHUD();goHome();openAdvMap();}
+    };
+  }
+  spawnParticles(20);
+  SFX.trophy();
+  if(modal){modal.classList.remove('show');void modal.offsetWidth;modal.classList.add('show');}
+}
+
+// ── Chest reward ──
+function showAdvChest(reward,onClose){
+  var modal=document.getElementById('adv-chest-modal');
+  var icons={bronze:'📦',silver:'🪣',gold:'🏆',campaign_master:'👑'};
+  var icon=icons[reward.trophy]||'🎁';
+  document.getElementById('adv-chest-icon').textContent=icon;
+  document.getElementById('adv-chest-title').textContent='Treasure Unlocked!';
+  var rewardText='+'+reward.stars+'⭐';
+  if(reward.trophy&&reward.trophy!==null){
+    rewardText+='\n🏅 '+reward.trophy.replace('_',' ').replace(/\b\w/g,function(c){return c.toUpperCase()})+' Trophy';
+    // Grant achievement trophy
+    grantAchievement(reward.trophy==='campaign_master'?'perfect':reward.trophy);
+  }
+  document.getElementById('adv-chest-reward').textContent=rewardText;
+  earnStars(reward.stars);
+  spawnParticles(25);
+  SFX.trophy();
+  document.getElementById('adv-chest-close').onclick=function(){
+    modal.classList.remove('show');
+    if(onClose)onClose();
+  };
+  if(modal){modal.classList.remove('show');void modal.offsetWidth;modal.classList.add('show');}
+}
+
+// ── Level failed ──
+function showAdvFailed(){
+  if(!advMode||advLevelComplete)return;
+  var modal=document.getElementById('adv-fail-modal');
+  // Show objective progress
+  var objText=advLevel.objectives.map(function(o){
+    var prog=Math.min(advObjProgress[o.type]||0,o.target);
+    return objIcon(o.type)+' '+objLabel(o)+': '+prog+'/'+o.target+(prog>=o.target?' ✓':'');
+  }).join('\n');
+  document.getElementById('adv-fail-obj').textContent=objText;
+  // Wire buttons
+  document.getElementById('adv-fail-restart').onclick=function(){
+    modal.classList.remove('show');
+    startAdvLevel(advLevel);
+  };
+  document.getElementById('adv-fail-home').onclick=function(){
+    modal.classList.remove('show');
+    advMode=false;hideAdvHUD();goHome();
+  };
+  // Powerup buttons - wire Shuffle, Blast
+  var pwrBtns=document.querySelectorAll('.adv-fail-pwrup');
+  pwrBtns.forEach(function(btn){
+    var type=btn.getAttribute('data-type');
+    btn.onclick=function(){
+      modal.classList.remove('show');
+      if(type==='shuffle')shopShuffle();
+      else if(type==='blast')shopBlast();
+      else if(type==='undo')shopUndo();
+    };
+  });
+  if(modal){modal.classList.remove('show');void modal.offsetWidth;modal.classList.add('show');}
+}
+
+// ── Reset adv mode on goHome ──
+function resetAdvMode(){
+  advMode=false;advLevel=null;advLevelComplete=false;
+  advIceGrid=[];advBlockGrid=[];advObjProgress={};
+  hideAdvHUD();
+}
+
 var DESIGN_W=390,DESIGN_H=844;
 function scaleGame(){
   var sw=window.innerWidth,sh=window.innerHeight;
   var scale=Math.min(sw/DESIGN_W,sh/DESIGN_H);
   var tx=(sw-DESIGN_W*scale)/2;
   var ty=(sh-DESIGN_H*scale)/2;
+  // Scale adv map
+  var advScreen=document.getElementById('adv-map-screen');
+  if(advScreen){advScreen.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';}
   // Scale game canvas
   var w=document.getElementById('w');
   if(w){
@@ -1712,3 +2499,6 @@ loadAckUnlocks();
 loadUnlocks();
 initGame();
 window.addEventListener('resize',renderTray);
+
+document.getElementById('adv-map-close').addEventListener('click',closeAdvMap);
+document.getElementById('adv-hud-back').addEventListener('click',function(){if(advMode){advMode=false;hideAdvHUD();goHome();openAdvMap();}});
