@@ -1544,9 +1544,20 @@ function showAchPopover(def,isEarned,anchorEl){
   var st=document.getElementById('ap-status');
   if(isEarned){var ach=getAchievements(),dt=new Date(ach[def.id].earnedAt);st.className='ap-status earned';st.textContent='✓ Earned '+dt.toLocaleDateString();}
   else{st.className='ap-status locked';st.textContent='🔒 '+def.desc;}
+  // Position near card but clamp fully within viewport
   var rect=anchorEl.getBoundingClientRect();
-  pop.style.left=Math.max(8,Math.min(window.innerWidth-218,rect.left+rect.width/2-105))+'px';
-  pop.style.top=(rect.bottom+8>window.innerHeight-170?rect.top-170:rect.bottom+8)+'px';
+  var pw=210,ph=170;
+  var vw=window.innerWidth,vh=window.innerHeight;
+  var left=rect.left+rect.width/2-pw/2;
+  var top=rect.bottom+8;
+  // Clamp horizontal
+  left=Math.max(8,Math.min(vw-pw-8,left));
+  // Flip above if would go off bottom
+  if(top+ph>vh-8)top=Math.max(8,rect.top-ph-8);
+  // If still off screen (e.g. very small screen), centre it
+  if(top<8)top=Math.max(8,Math.round((vh-ph)/2));
+  pop.style.left=left+'px';
+  pop.style.top=top+'px';
   pop.classList.add('show');
 }
 function convertTrophiesToStars(trophies,btn){

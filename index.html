@@ -342,7 +342,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:#1a2a1
 @keyframes blastpulse{from{box-shadow:0 0 0 0 rgba(255,120,50,.3)}to{box-shadow:0 0 8px 3px rgba(255,120,50,.25)}}
 .cell.blast-row{background:#ff7832!important;border-color:#ffaa66!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)!important}
 .cell.blast-col{background:#1ecfb0!important;border-color:#5fffdf!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)!important}
-#blast-bar{display:none;width:100%;border-radius:8px;overflow:hidden;flex-shrink:0;flex-direction:row}
+#blast-bar{display:none;width:calc(100% - 16px);border-radius:10px;overflow:hidden;flex-direction:row;position:absolute;bottom:180px;left:8px;right:8px;z-index:50;box-shadow:0 4px 20px rgba(0,0,0,.5)}
 #blast-bar.show{display:flex}
 #blast-row-btn,#blast-col-btn{flex:1;padding:6px 4px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:background .15s}
 #blast-row-btn{background:rgba(255,120,50,.25);color:#ffaa66;border-right:1px solid rgba(255,255,255,.1)}
@@ -362,7 +362,7 @@ body.modal-open #w.show #save-prompt,
 body.modal-open #w.show #go{pointer-events:auto;user-select:auto}
 
 /* ── ACHIEVEMENT POPOVER ── */
-#ach-popover{position:fixed;z-index:2100;background:linear-gradient(135deg,#2d1e5a,#1a2a3a);border:1px solid rgba(255,200,50,.4);border-radius:12px;padding:12px 14px;width:210px;pointer-events:auto;box-shadow:0 6px 24px rgba(0,0,0,.6);display:none}
+#ach-popover{position:fixed;z-index:2100;background:linear-gradient(135deg,#2d1e5a,#1a2a3a);border:1px solid rgba(255,200,50,.4);border-radius:12px;padding:12px 14px;width:210px;max-width:calc(100vw - 16px);pointer-events:auto;box-shadow:0 6px 24px rgba(0,0,0,.6);display:none}
 #ach-popover.show{display:block;animation:igtipslide .18s ease forwards}
 #ach-popover .ap-icon{font-size:26px;text-align:center;margin-bottom:5px}
 #ach-popover .ap-title{font-size:13px;font-weight:700;color:#f0c060;margin-bottom:3px}
@@ -2181,9 +2181,20 @@ function showAchPopover(def,isEarned,anchorEl){
   var st=document.getElementById('ap-status');
   if(isEarned){var ach=getAchievements(),dt=new Date(ach[def.id].earnedAt);st.className='ap-status earned';st.textContent='✓ Earned '+dt.toLocaleDateString();}
   else{st.className='ap-status locked';st.textContent='🔒 '+def.desc;}
+  // Position near card but clamp fully within viewport
   var rect=anchorEl.getBoundingClientRect();
-  pop.style.left=Math.max(8,Math.min(window.innerWidth-218,rect.left+rect.width/2-105))+'px';
-  pop.style.top=(rect.bottom+8>window.innerHeight-170?rect.top-170:rect.bottom+8)+'px';
+  var pw=210,ph=170;
+  var vw=window.innerWidth,vh=window.innerHeight;
+  var left=rect.left+rect.width/2-pw/2;
+  var top=rect.bottom+8;
+  // Clamp horizontal
+  left=Math.max(8,Math.min(vw-pw-8,left));
+  // Flip above if would go off bottom
+  if(top+ph>vh-8)top=Math.max(8,rect.top-ph-8);
+  // If still off screen (e.g. very small screen), centre it
+  if(top<8)top=Math.max(8,Math.round((vh-ph)/2));
+  pop.style.left=left+'px';
+  pop.style.top=top+'px';
   pop.classList.add('show');
 }
 function convertTrophiesToStars(trophies,btn){
