@@ -9,6 +9,10 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1a2a1a">
 <title>Block Puzzle</title>
+  <meta name="author" content="Sunil Malleshaiah">
+  <meta name="version" content="5.2">
+  <meta name="description" content="A mobile-first block puzzle game by Sunil Malleshaiah. Drag pieces, clear lines, earn stars.">
+  <!-- Block Puzzle v5.2 — © 2025 Sunil Malleshaiah. MIT License. -->
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgZmlsbD0iIzFhMmExYSIgcng9IjMwIi8+PHJlY3QgeD0iMjAiIHk9IjIwIiB3aWR0aD0iNjgiIGhlaWdodD0iNjgiIGZpbGw9IiNkNDkyMGEiIHJ4PSI4Ii8+PHJlY3QgeD0iMTA0IiB5PSIyMCIgd2lkdGg9IjY4IiBoZWlnaHQ9IjY4IiBmaWxsPSIjN2M1Y2JmIiByeD0iOCIvPjxyZWN0IHg9IjIwIiB5PSIxMDQiIHdpZHRoPSI2OCIgaGVpZ2h0PSI2OCIgZmlsbD0iIzdjNWNiZiIgcng9IjgiLz48cmVjdCB4PSIxMDQiIHk9IjEwNCIgd2lkdGg9IjY4IiBoZWlnaHQ9IjY4IiBmaWxsPSIjZDQ5MjBhIiByeD0iOCIvPjwvc3ZnPg==">
 <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiQmxvY2sgUHV6emxlIiwic2hvcnRfbmFtZSI6IkJsb2NrIFB1enpsZSIsImRlc2NyaXB0aW9uIjoiRHJhZyBwaWVjZXMgwrcgQ2xlYXIgbGluZXMgwrcgRWFybiBzdGFycyIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsIm9yaWVudGF0aW9uIjoicG9ydHJhaXQiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzFhMmExYSIsInRoZW1lX2NvbG9yIjoiIzFhMmExYSIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBeE9USWdNVGt5SWo0OGNtVmpkQ0IzYVdSMGFEMGlNVGt5SWlCb1pXbG5hSFE5SWpFNU1pSWdabWxzYkQwaUl6RmhNbUV4WVNJZ2NuZzlJak13SWk4K1BISmxZM1FnZUQwaU1qQWlJSGs5SWpJd0lpQjNhV1IwYUQwaU5qZ2lJR2hsYVdkb2REMGlOamdpSUdacGJHdzlJaU5rTkRreU1HRWlJSEo0UFNJNElpOCtQSEpsWTNRZ2VEMGlNVEEwSWlCNVBTSXlNQ0lnZDJsa2RHZzlJalk0SWlCb1pXbG5hSFE5SWpZNElpQm1hV3hzUFNJak4yTTFZMkptSWlCeWVEMGlPQ0l2UGp4eVpXTjBJSGc5SWpJd0lpQjVQU0l4TURRaUlIZHBaSFJvUFNJMk9DSWdhR1ZwWjJoMFBTSTJPQ0lnWm1sc2JEMGlJemRqTldOaVppSWdjbmc5SWpnaUx6NDhjbVZqZENCNFBTSXhNRFFpSUhrOUlqRXdOQ0lnZDJsa2RHZzlJalk0SWlCb1pXbG5hSFE5SWpZNElpQm1hV3hzUFNJalpEUTVNakJoSWlCeWVEMGlPQ0l2UGp3dmMzWm5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwiLCJwdXJwb3NlIjoiYW55IG1hc2thYmxlIn1dfQ==">
 <style>
@@ -631,6 +635,9 @@ body.modal-open #w.show #go{pointer-events:auto;user-select:auto}
 </div><!-- end #scale-shell -->
 
 <script>
+// © 2025 Sunil Malleshaiah — Block Puzzle v5.2 — MIT License
+var GAME_VERSION='5.2',GAME_AUTHOR='Sunil Malleshaiah';
+
 // localStorage safety — sandboxed iframes may throw SecurityError
 var _ls={getItem:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},setItem:function(k,v){try{localStorage.setItem(k,v);}catch(e){}},removeItem:function(k){try{localStorage.removeItem(k);}catch(e){}}};
 if(!Array.prototype.find){Array.prototype.find=function(fn){for(var i=0;i<this.length;i++)if(fn(this[i],i,this))return this[i];};}

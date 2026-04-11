@@ -1,3 +1,6 @@
+// © 2025 Sunil Malleshaiah — Block Puzzle v5.2 — MIT License
+var GAME_VERSION='5.2',GAME_AUTHOR='Sunil Malleshaiah';
+
 // localStorage safety — sandboxed iframes may throw SecurityError
 var _ls={getItem:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},setItem:function(k,v){try{localStorage.setItem(k,v);}catch(e){}},removeItem:function(k){try{localStorage.removeItem(k);}catch(e){}}};
 if(!Array.prototype.find){Array.prototype.find=function(fn){for(var i=0;i<this.length;i++)if(fn(this[i],i,this))return this[i];};}

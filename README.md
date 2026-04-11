@@ -1,5 +1,7 @@
 # Block Puzzle 🎮
 
+> **Version 5.2** — by [Sunil Malleshaiah](https://github.com/SunilCap)
+
 A mobile-first block puzzle game built as a single-file PWA. Drag pieces onto a 10×10 board, clear rows and columns, and build your score.
 
 ## Play
@@ -10,10 +12,10 @@ Open `index.html` directly in any modern browser — no server needed. Or deploy
 
 - **10×10 board** — 26 piece shapes, drag-and-drop with 1.8× speed multiplier
 - **HOLD slot** — save a piece for later
-- **Power-ups** — Shuffle, Undo, Rotate, +Hold, Blast (progressively unlocked)
+- **Power-ups** — Shuffle, Undo, Rotate, +Hold, Blast (drag-based, auto-detects row/col)
 - **Treasure Chest** — earn gems by clearing lines, crack open chests for ⭐ stars
 - **Daily Quests** — 3 quests per day, seeded by date, reset at midnight
-- **Daily Challenges** — Easy / Medium / Hard challenge per day with trophy awards
+- **Daily Challenges** — Easy / Medium / Hard per day with trophy awards + Play Next
 - **Achievement Trophies** — 11 achievements with tap-to-explain popovers
 - **Convert Trophies** — convert challenge trophies to stars
 - **Daily Bonus** — streak-based login rewards
@@ -24,12 +26,12 @@ Open `index.html` directly in any modern browser — no server needed. Or deploy
 
 ```
 index.html   — Complete self-contained game (single file, no dependencies)
-game.js      — Extracted game logic (reference / for review)
-style.css    — Extracted styles (reference / for review)
+game.js      — Extracted game logic (for review / version tracking)
+style.css    — Extracted styles (for review / version tracking)
 README.md    — This file
 ```
 
-> **Note:** `index.html` is the deployable file — it is fully self-contained with all CSS and JS inline. `game.js` and `style.css` are extracted copies for code review and version tracking.
+> `index.html` is the deployable file — fully self-contained with all CSS and JS inline.
 
 ## Economy
 
@@ -55,36 +57,18 @@ README.md    — This file
 | +Hold slot | 20 ⭐ earned |
 | Blast | 30 ⭐ earned |
 
-## Chest Tiers
-
-| Tier | Capacity | Reward | Unlocks at |
-|---|---|---|---|
-| 📦 Bronze | 30 gems | 15 ⭐ | Start |
-| 🪣 Silver | 60 gems | 35 ⭐ | 50 ⭐ total earned |
-| 🏆 Gold | 100 gems | 65 ⭐ | 150 ⭐ total earned |
-
-## localStorage Keys
-
-| Key | Value |
-|---|---|
-| `bp_best` | All-time best score |
-| `bp_stars` | Current star balance |
-| `bp_stars_total` | Total stars ever earned |
-| `bp_streak` | Login streak |
-| `bp_chest_gems` | Current chest gem count |
-| `bp_quests_YYYY-M-D` | Daily quest progress |
-| `bp_ch_YYYY_M_D` | Challenge result per day |
-| `bp_achievements` | Earned achievements |
-| `bp_unlocks` | Unlocked power-ups |
-
 ## Browser Support
 
-Modern browsers + iOS Safari 9+. Includes `Array.find` polyfill and a `localStorage` safety proxy for sandboxed iframe environments.
+Modern browsers + iOS Safari 9+. Includes `Array.find` polyfill and `localStorage` safety proxy.
 
 ## Ad Integration
 
-Ad banner placeholders are in place in the lobby and game screen. Replace the comments inside `#lb-ad-banner` and `#game-ad` with your AdSense `<ins>` tag. The AdSense loader script should go in `<head>`.
+Replace the comments inside `#lb-ad-banner` and `#game-ad` with your AdSense `<ins>` tag.
 
 ## License
 
-MIT
+MIT License — © 2025 Sunil Malleshaiah
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
