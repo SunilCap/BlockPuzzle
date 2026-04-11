@@ -1643,13 +1643,24 @@ var DESIGN_W=390,DESIGN_H=844;
 function scaleGame(){
   var sw=window.innerWidth,sh=window.innerHeight;
   var scale=Math.min(sw/DESIGN_W,sh/DESIGN_H);
-  // Offset so scaled canvas is centered
   var tx=(sw-DESIGN_W*scale)/2;
   var ty=(sh-DESIGN_H*scale)/2;
+  // Scale game canvas
   var w=document.getElementById('w');
   if(w){
     w.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';
     w.style.transformOrigin='top left';
+  }
+  // Scale lobby to match
+  var lobby=document.getElementById('lobby');
+  if(lobby){
+    lobby.style.width=DESIGN_W+'px';
+    lobby.style.height=DESIGN_H+'px';
+    lobby.style.position='fixed';
+    lobby.style.top='0';
+    lobby.style.left='0';
+    lobby.style.transformOrigin='top left';
+    lobby.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')';
   }
 }
 scaleGame();
