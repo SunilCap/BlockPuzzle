@@ -454,8 +454,8 @@ body.modal-open #w.show #go{pointer-events:auto;user-select:auto}
 .cell.ice-2{background:rgba(100,180,255,.55)!important;border-color:rgba(100,180,255,.8)!important}
 .cell.ice-3{background:rgba(50,130,255,.7)!important;border-color:rgba(50,130,255,.9)!important;box-shadow:inset 0 0 6px rgba(255,255,255,.3)!important}
 .cell.ice-4{background:rgba(20,80,200,.85)!important;border-color:rgba(20,80,200,1)!important;box-shadow:inset 0 0 10px rgba(255,255,255,.4)!important}
-.cell.adv-block{background:linear-gradient(135deg,#7c5cbf,#9b7de8)!important;border-color:rgba(124,92,191,.8)!important}
-.pc.adv-colored{background:linear-gradient(135deg,#7c5cbf,#9b7de8)!important;border-color:rgba(200,160,255,.9)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 8px rgba(140,100,255,.6)!important}
+.cell.adv-block{background:linear-gradient(135deg,#e040c0,#c020a0)!important;border-color:rgba(255,100,220,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 4px rgba(220,60,180,.5)!important}
+.pc.adv-colored{background:linear-gradient(135deg,#e040c0,#c020a0)!important;border-color:rgba(255,120,230,.9)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 10px rgba(220,60,180,.7)!important;position:relative}
 
 /* Level failed modal */
 #adv-fail-modal{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85)}
