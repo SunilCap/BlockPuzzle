@@ -1317,14 +1317,14 @@ function clearLines(onDone){
   var STAGGER=18;
   rows.forEach(function(r){
     for(var c=0;c<COLS;c++){
-      if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)continue; // still iced — skip
+      if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>=1)continue; // still iced — skip
       var el=cellEl(r,c);
       if(el&&grid[r][c])cells.push({el:el,dist:Math.abs(c-4.5)});
     }
   });
   cols.forEach(function(c){
     for(var r=0;r<ROWS;r++){
-      if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)continue;
+      if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>=1)continue;
       var el=cellEl(r,c);
       if(el&&grid[r][c]&&!cells.find(function(x){return x.el===el;})){
         cells.push({el:el,dist:Math.abs(r-4.5)});
@@ -1351,7 +1351,7 @@ function clearLines(onDone){
     // Zero cleared cells — skip any that still have ice
     rows.forEach(function(r){
       for(var cc=0;cc<COLS;cc++){
-        if(advMode&&advIceGrid[r]&&advIceGrid[r][cc]>0)continue;
+        if(advMode&&advIceGrid[r]&&advIceGrid[r][cc]>=1)continue;
         grid[r][cc]=0;
         if(advMode&&advColorGrid[r])advColorGrid[r][cc]=0;
         if(advMode&&advBlockGrid[r])advBlockGrid[r][cc]=0;
@@ -1359,7 +1359,7 @@ function clearLines(onDone){
     });
     cols.forEach(function(cl){
       for(var rr=0;rr<ROWS;rr++){
-        if(advMode&&advIceGrid[rr]&&advIceGrid[rr][cl]>0)continue;
+        if(advMode&&advIceGrid[rr]&&advIceGrid[rr][cl]>=1)continue;
         grid[rr][cl]=0;
         if(advMode&&advColorGrid[rr])advColorGrid[rr][cl]=0;
         if(advMode&&advBlockGrid[rr])advBlockGrid[rr][cl]=0;
@@ -1491,7 +1491,7 @@ function onUpT(e){if(_ghostRafId){cancelAnimationFrame(_ghostRafId);_ghostRafId=
 function advCellClass(r,c){
   if(!advMode)return '';
   if(advColorGrid[r]&&advColorGrid[r][c])return ' adv-block';
-  if(advIceGrid[r]&&advIceGrid[r][c]>0)return ' ice-'+advIceGrid[r][c];
+  if(advIceGrid[r]&&advIceGrid[r][c]>=1)return ' ice-'+advIceGrid[r][c];
   return '';
 }
 function showGhost(cx,cy){
@@ -1865,10 +1865,10 @@ var ADV_LEVELS=[
    grid:[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
-     [0,0,2,2,2,2,2,2,0,0],
+     [0,0,3,3,3,3,3,3,0,0],
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
-     [0,0,2,2,2,2,2,2,0,0],
+     [0,0,3,3,3,3,3,3,0,0],
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
@@ -1879,16 +1879,16 @@ var ADV_LEVELS=[
 
   {id:7,name:'Ice Border',
    grid:[
-     [2,2,2,2,2,2,2,2,2,2],
-     [2,0,0,0,0,0,0,0,0,2],
-     [2,0,0,0,0,0,0,0,0,2],
-     [2,0,0,0,0,0,0,0,0,2],
-     [2,0,0,0,0,0,0,0,0,2],
-     [2,0,0,0,0,0,0,0,0,2],
-     [2,0,0,0,0,0,0,0,0,2],
-     [2,0,0,0,0,0,0,0,0,2],
-     [2,0,0,0,0,0,0,0,0,2],
-     [2,2,2,2,2,2,2,2,2,2],
+     [3,3,3,3,3,3,3,3,3,3],
+     [3,0,0,0,0,0,0,0,0,3],
+     [3,0,0,0,0,0,0,0,0,3],
+     [3,0,0,0,0,0,0,0,0,3],
+     [3,0,0,0,0,0,0,0,0,3],
+     [3,0,0,0,0,0,0,0,0,3],
+     [3,0,0,0,0,0,0,0,0,3],
+     [3,0,0,0,0,0,0,0,0,3],
+     [3,0,0,0,0,0,0,0,0,3],
+     [3,3,3,3,3,3,3,3,3,3],
    ],
    objectives:[{type:'break_ice',target:16},{type:'lines',target:4}],
    stars:[1100,2000,3200]},
@@ -2446,7 +2446,7 @@ function startAdvLevel(lvl){
     advBlockGrid.push([0,0,0,0,0,0,0,0,0,0]);
     for(var c=0;c<10;c++){
       var v=lvl.grid[r][c];
-      if(v>=2)advIceGrid[r][c]=v-1;    // remap: 2→1(melt),3→2(crack),4→3(hard)
+      if(v>=2)advIceGrid[r][c]=v;      // 2=light(2hits), 3=cracked(3hits), 4=hard(4hits)
       else if(v===1)advBlockGrid[r][c]=1;
     }
   }
@@ -2485,7 +2485,7 @@ function renderAdvCellStyles(){
       if(!grid[r][c])continue; // empty cell — no classes needed
       var ice=advIceGrid[r][c];
       if(ice>=1){
-        // Ice stage 1,2,3 — apply ice class
+        // Ice stage 1,2,3,4 — apply ice class
         el.classList.add('ice-'+ice);
       } else if(advColorGrid[r]&&advColorGrid[r][c]){
         // Coloured block (pink)
@@ -2562,14 +2562,14 @@ function advTrackClearBlocks(rows,cols){
   rows.forEach(function(r){
     for(var c=0;c<COLS;c++){
       // Skip if still iced — cell survived this clear
-      if(advIceGrid[r]&&advIceGrid[r][c]>0)continue;
+      if(advIceGrid[r]&&advIceGrid[r][c]>=1)continue;
       if(advBlockGrid[r]&&advBlockGrid[r][c]===1)count++;
       if(advColorGrid[r]&&advColorGrid[r][c]===1)count++;
     }
   });
   cols.forEach(function(col){
     for(var r=0;r<ROWS;r++){
-      if(advIceGrid[r]&&advIceGrid[r][col]>0)continue;
+      if(advIceGrid[r]&&advIceGrid[r][col]>=1)continue;
       if(advBlockGrid[r]&&advBlockGrid[r][col]===1)count++;
       if(advColorGrid[r]&&advColorGrid[r][col]===1)count++;
     }

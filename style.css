@@ -450,14 +450,14 @@ body.modal-open #w.show #go{pointer-events:auto;user-select:auto}
 .adv-obj-progress{font-weight:700}
 
 /* Ice cell visual */
-/* Ice stage 1 = melting (light blue) */
-.cell.ice-1{background:rgba(160,220,255,.5)!important;border-color:rgba(160,220,255,.7)!important;box-shadow:inset 0 0 4px rgba(255,255,255,.2)!important}
-/* Ice stage 2 = cracked (medium blue with crack effect) */
-.cell.ice-2{background:rgba(80,160,240,.7)!important;border-color:rgba(100,180,255,.9)!important;box-shadow:inset 0 0 8px rgba(255,255,255,.3)!important}
-/* Ice stage 3 = hard ice (deep blue, fully frozen) */
-.cell.ice-3{background:rgba(30,100,220,.88)!important;border-color:rgba(60,140,255,1)!important;box-shadow:inset 0 0 12px rgba(255,255,255,.4),0 0 6px rgba(30,100,220,.5)!important}
-/* ice-4 kept for compat */
-.cell.ice-4{background:rgba(10,60,180,.95)!important;border-color:rgba(40,100,220,1)!important;box-shadow:inset 0 0 16px rgba(255,255,255,.5),0 0 8px rgba(10,60,180,.6)!important}
+/* ice-1 = almost melted (1 more hit) */
+.cell.ice-1{background:rgba(200,235,255,.45)!important;border-color:rgba(200,235,255,.6)!important;box-shadow:inset 0 0 3px rgba(255,255,255,.15)!important}
+/* ice-2 = light frost (2 hits to clear) */
+.cell.ice-2{background:rgba(160,220,255,.55)!important;border-color:rgba(180,230,255,.8)!important;box-shadow:inset 0 0 4px rgba(255,255,255,.25)!important}
+/* ice-3 = cracked ice (3 hits to clear) */
+.cell.ice-3{background:rgba(80,160,240,.75)!important;border-color:rgba(100,180,255,.95)!important;box-shadow:inset 0 0 8px rgba(255,255,255,.35)!important}
+/* ice-4 = hard ice (4 hits to clear) */
+.cell.ice-4{background:rgba(20,80,200,.9)!important;border-color:rgba(40,120,255,1)!important;box-shadow:inset 0 0 14px rgba(255,255,255,.45),0 0 8px rgba(20,80,200,.5)!important}
 .cell.adv-block{background:linear-gradient(135deg,#e040c0,#c020a0)!important;border-color:rgba(255,100,220,.8)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 4px rgba(220,60,180,.5)!important}
 .pc.adv-colored{background:linear-gradient(135deg,#e040c0,#c020a0)!important;border-color:rgba(255,120,230,.9)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 10px rgba(220,60,180,.7)!important;position:relative}
 
