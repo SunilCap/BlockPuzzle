@@ -1814,8 +1814,39 @@ function updateShopBtns(){
   if(bB&&!bB.classList.contains('locked')){bB.disabled=stars<5;if(blastMode){bB.classList.add('active-blast');bB.querySelector('.sl').textContent='Blasting';bB.querySelector('.sc2').textContent='tap board';}else{bB.classList.remove('active-blast');bB.querySelector('.sl').textContent='Blast';bB.querySelector('.sc2').textContent='5⭐';}}
 }
 
-function saveState(){lastState={grid:grid.map(function(r){return r.slice();}),pieces:pieces.slice(),held:held,held2:held2,score:score,combo:combo,totalLines:totalLines};updateShopBtns();}
-function shopUndo(){if(blastMode)cancelBlast();questUndoUsed=true;if(rotateMode){cancelRotate();return;}if(!lastState||stars<3)return;spendStars(3);grid=lastState.grid.map(function(r){return r.slice();});pieces=lastState.pieces.slice();held=lastState.held;held2=lastState.held2;score=lastState.score;combo=lastState.combo;totalLines=lastState.totalLines;document.getElementById('scd').textContent=score;lastState=null;rotatedSlots={};syncBoard();renderTray();updateShopBtns();hideToast();checkState(pieces.slice(),held,held2);}
+function saveState(){
+  var state={grid:grid.map(function(r){return r.slice();}),pieces:pieces.slice(),held:held,held2:held2,score:score,combo:combo,totalLines:totalLines};
+  if(advMode){
+    state.advColorGrid=advColorGrid.map(function(r){return r.slice();});
+    state.advIceGrid=advIceGrid.map(function(r){return r.slice();});
+    state.advBlockGrid=advBlockGrid.map(function(r){return r.slice();});
+    state.advObjProgress=JSON.parse(JSON.stringify(advObjProgress));
+  }
+  lastState=state;
+  updateShopBtns();
+}
+function shopUndo(){
+  if(blastMode)cancelBlast();questUndoUsed=true;
+  if(rotateMode){cancelRotate();return;}
+  if(!lastState||stars<3)return;
+  spendStars(3);
+  grid=lastState.grid.map(function(r){return r.slice();});
+  pieces=lastState.pieces.slice();
+  held=lastState.held;held2=lastState.held2;
+  score=lastState.score;combo=lastState.combo;totalLines=lastState.totalLines;
+  document.getElementById('scd').textContent=score;
+  // Restore adv grids
+  if(advMode&&lastState.advColorGrid){
+    advColorGrid=lastState.advColorGrid.map(function(r){return r.slice();});
+    advIceGrid=lastState.advIceGrid.map(function(r){return r.slice();});
+    advBlockGrid=lastState.advBlockGrid.map(function(r){return r.slice();});
+    advObjProgress=JSON.parse(JSON.stringify(lastState.advObjProgress));
+  }
+  lastState=null;rotatedSlots={};
+  syncBoard(); // also calls renderAdvCellStyles via hook
+  renderTray();updateShopBtns();hideToast();
+  checkState(pieces.slice(),held,held2);
+}
 function shopShuffle(){if(blastMode)cancelBlast();updateQuestProgress('powerup',1);if(rotateMode){cancelRotate();return;}if(stars<2||pieces.every(function(p){return p===null;}))return;spendStars(2);rotatedSlots={};for(var i=0;i<3;i++)if(pieces[i]!==null)pieces[i]=rnd();renderTray();checkState(pieces.slice(),held,held2);}
 function shopRotate(){if(blastMode)cancelBlast();if(rotateMode){cancelRotate();return;}if(stars<1||pieces.every(function(p){return p===null;}))return;rotateMode=true;updateShopBtns();setRotateHandlers();showToast('🔄 Tap any piece to rotate (even locked) · 1⭐ on placement','info');}
 function cancelRotate(){rotateMode=false;updateShopBtns();hideToast();renderTray();}
@@ -2074,8 +2105,8 @@ function clearLines(onDone){
   setTimeout(function(){
     // Track adv block clears before zeroing
     if(advMode)advTrackClearBlocks(rows,cols);
-    rows.forEach(function(r){grid[r].fill(0);if(advMode&&advColorGrid[r])advColorGrid[r].fill(0);});
-    cols.forEach(function(c){for(var r=0;r<ROWS;r++){grid[r][c]=0;if(advMode&&advColorGrid[r])advColorGrid[r][c]=0;}});
+    rows.forEach(function(r){grid[r].fill(0);if(advMode&&advColorGrid[r])advColorGrid[r].fill(0);if(advMode&&advIceGrid[r])advIceGrid[r].fill(0);});
+    cols.forEach(function(c){for(var r=0;r<ROWS;r++){grid[r][c]=0;if(advMode&&advColorGrid[r])advColorGrid[r][c]=0;if(advMode&&advIceGrid[r])advIceGrid[r][c]=0;}});
     syncBoard();
     if(onDone)onDone(pts);
   },totalAnim);
@@ -3278,26 +3309,26 @@ function advTrackClearBlock(r,c){
 }
 function advTrackIce(rows,cols){
   if(!advMode)return;
-  var cleared=false;
-  // Check each iced cell — if its row or col was cleared, reduce ice
+  var changed=false;
   for(var r=0;r<10;r++){
     for(var c=0;c<10;c++){
       var ice=advIceGrid[r][c];
-      if(ice<2)continue;
-      var rowCleared=rows.indexOf(r)>=0;
-      var colCleared=cols.indexOf(c)>=0;
-      if(rowCleared||colCleared){
-        advIceGrid[r][c]=ice-1;
-        if(advIceGrid[r][c]===1){
-          // Became a normal block
-          advBlockGrid[r][c]=1;
-          advIceGrid[r][c]=0;
-        }
-        cleared=true;
+      if(ice<1)continue; // 0 = no ice
+      var hit=rows.indexOf(r)>=0||cols.indexOf(c)>=0;
+      if(!hit)continue;
+      advIceGrid[r][c]=ice-1;
+      changed=true;
+      if(advIceGrid[r][c]===0){
+        // Fully thawed — now a normal block to be cleared by the line clear
+        // grid[r][c] is already being cleared by clearLines, so ice is gone
+        // Count it toward break_ice objective
+        advObjProgress['break_ice']=(advObjProgress['break_ice']||0)+1;
+        renderAdvHUD();checkAdvComplete();
       }
+      // Note: advBlockGrid not used for ice — ice renders via advIceGrid only
     }
   }
-  if(cleared){renderAdvCellStyles();renderAdvHUD();}
+  if(changed){renderAdvCellStyles();}
 }
 
 // ── Check if all objectives met ──
