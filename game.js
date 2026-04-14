@@ -948,8 +948,14 @@ function resetCell(r,c){
   var cls='cell';
   if(grid[r][c]){
     cls+=' on';
-    if(advMode&&advColorGrid[r]&&advColorGrid[r][c])cls+=' adv-block';
-    else if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)cls+=' ice-'+advIceGrid[r][c];
+    var ice=advMode&&advIceGrid[r]?advIceGrid[r][c]:0;
+    if(ice>=1){
+      cls+=' ice-'+ice;
+    } else if(advMode&&advColorGrid[r]&&advColorGrid[r][c]){
+      cls+=' adv-block';
+    } else if(advMode&&advBlockGrid[r]&&advBlockGrid[r][c]){
+      cls+=' adv-block';
+    }
   }
   el.className=cls;
 }
@@ -1308,15 +1314,17 @@ function clearLines(onDone){
   var cells=[];
   rows.forEach(function(r){
     for(var c=0;c<COLS;c++){
+      // Skip iced cells — they don't animate out, they just lose a stage
+      if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)continue;
       var el=cellEl(r,c);
       if(el&&grid[r][c])cells.push({el:el,dist:Math.abs(c-4.5)});
     }
   });
   cols.forEach(function(c){
     for(var r=0;r<ROWS;r++){
+      if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)continue;
       var el=cellEl(r,c);
       if(el&&grid[r][c]){
-        // avoid duplicates from row+col intersections
         if(!cells.find(function(x){return x.el===el;}))
           cells.push({el:el,dist:Math.abs(r-4.5)});
       }
@@ -2471,11 +2479,20 @@ function renderAdvCellStyles(){
   for(var r=0;r<10;r++){
     for(var c=0;c<10;c++){
       var el=cellEl(r,c);if(!el)continue;
+      // Always start from scratch
       el.classList.remove('ice-1','ice-2','ice-3','ice-4','adv-block');
+      if(!grid[r][c])continue; // empty cell — no classes needed
       var ice=advIceGrid[r][c];
-      var blk=advBlockGrid[r][c];
-      if(ice>=2)el.classList.add('ice-'+ice);
-      else if(blk)el.classList.add('adv-block');
+      if(ice>=1){
+        // Ice stage 1,2,3 — apply ice class
+        el.classList.add('ice-'+ice);
+      } else if(advColorGrid[r]&&advColorGrid[r][c]){
+        // Coloured block (pink)
+        el.classList.add('adv-block');
+      } else if(advBlockGrid[r]&&advBlockGrid[r][c]){
+        // Pre-placed board block (purple)
+        el.classList.add('adv-block');
+      }
     }
   }
 }
