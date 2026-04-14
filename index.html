@@ -1717,7 +1717,16 @@ var slotW=function(id){var e=document.getElementById(id);if(!e)return 56;var r=e
 function slotInnerH(id){var e=document.getElementById(id);if(!e)return 50;var r=e.getBoundingClientRect();return Math.max(30,r.height-18);}
 function fitCs(sh,W,H){var g=2,cc=sh[0].length,rr=sh.length;var byW=Math.floor((W-g*(cc-1))/cc);var byH=Math.floor((H-g*(rr-1))/rr);return Math.max(4,Math.min(byW,byH,16));}
 var cellEl=function(r,c){if(r<0||r>=ROWS||c<0||c>=COLS)return null;return document.getElementById('board').children[r*COLS+c];};
-function resetCell(r,c){var el=cellEl(r,c);if(!el)return;var cls='cell';if(grid[r][c]){cls+=' on';if(advMode&&advColorGrid[r]&&advColorGrid[r][c])cls+=' adv-block';}el.className=cls;}
+function resetCell(r,c){
+  var el=cellEl(r,c);if(!el)return;
+  var cls='cell';
+  if(grid[r][c]){
+    cls+=' on';
+    if(advMode&&advColorGrid[r]&&advColorGrid[r][c])cls+=' adv-block';
+    else if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)cls+=' ice-'+advIceGrid[r][c];
+  }
+  el.className=cls;
+}
 function syncBoard(){for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){resetCell(r,c);}
   if(advMode)renderAdvCellStyles();}
 function clearGhost(){for(var i=0;i<ghostCells.length;i++){var g=ghostCells[i];resetCell(g.r,g.c);}ghostCells=[];snapPos=null;}
@@ -2112,7 +2121,7 @@ function clearLines(onDone){
   },totalAnim);
 }
 
-function clearHint(){for(var i=0;i<hintCells.length;i++){var h=hintCells[i],el=cellEl(h.r,h.c);if(el)el.className='cell'+(grid[h.r][h.c]?' on':'');}hintCells=[];}
+function clearHint(){for(var i=0;i<hintCells.length;i++){var h=hintCells[i];resetCell(h.r,h.c);}hintCells=[];}
 function scheduleHint(){clearTimeout(hintTimer);clearHint();hintTimer=setTimeout(showHint,5000);}
 function cancelHint(){clearTimeout(hintTimer);hintTimer=null;clearHint();}
 function showHint(){clearHint();var cands=pieces.filter(function(p){return p;});if(held)cands.push(held);if(held2)cands.push(held2);for(var i=0;i<cands.length;i++){var pos=findPlacement(cands[i]);if(pos){for(var r=0;r<pos.shape.length;r++)for(var c=0;c<pos.shape[r].length;c++){if(!pos.shape[r][c])continue;var el=cellEl(pos.sr+r,pos.sc+c);if(el){el.classList.add('hint');hintCells.push({r:pos.sr+r,c:pos.sc+c});}}return;}}}
@@ -2229,6 +2238,12 @@ function onMvT(e){
 function _flushGhost(){_ghostRafId=null;showGhost(_pendingGhostX,_pendingGhostY);}
 function onUp(e){if(_ghostRafId){cancelAnimationFrame(_ghostRafId);_ghostRafId=null;}endDrag(ampX(e.clientX),ampY(e.clientY));document.removeEventListener('mousemove',onMv);document.removeEventListener('mouseup',onUp);}
 function onUpT(e){if(_ghostRafId){cancelAnimationFrame(_ghostRafId);_ghostRafId=null;}var t=e.changedTouches[0];endDrag(ampX(t.clientX),ampY(t.clientY));document.removeEventListener('touchmove',onMvT);document.removeEventListener('touchend',onUpT);}
+function advCellClass(r,c){
+  if(!advMode)return '';
+  if(advColorGrid[r]&&advColorGrid[r][c])return ' adv-block';
+  if(advIceGrid[r]&&advIceGrid[r][c]>0)return ' ice-'+advIceGrid[r][c];
+  return '';
+}
 function showGhost(cx,cy){
   if(!dragging||!dragPiece)return;
   clearGhost();
@@ -2255,10 +2270,10 @@ function showGhost(cx,cy){
   var shape=trimShape(dragPiece);
   if(overBoard(cx,cy)){
     var snap=findSnapPos(cx,cy);
-    if(snap){snapPos=snap;for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++){if(!shape[r][c])continue;var el=cellEl(snap.r+r,snap.c+c);if(el){el.className='cell snap';ghostCells.push({r:snap.r+r,c:snap.c+c});}}return;}
+    if(snap){snapPos=snap;for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++){if(!shape[r][c])continue;var el=cellEl(snap.r+r,snap.c+c);if(el){el.className='cell snap'+advCellClass(snap.r+r,snap.c+c);ghostCells.push({r:snap.r+r,c:snap.c+c});}}return;}
   }
   snapPos=null;var dp=dropPos(cx,cy),sr=dp.row-Math.floor(shape.length/2),sc=dp.col-Math.floor(shape[0].length/2);
-  for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++){if(!shape[r][c])continue;var el=cellEl(sr+r,sc+c);if(el){el.className='cell bad';ghostCells.push({r:sr+r,c:sc+c});}}
+  for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++){if(!shape[r][c])continue;var el=cellEl(sr+r,sc+c);if(el){el.className='cell bad'+advCellClass(sr+r,sc+c);ghostCells.push({r:sr+r,c:sc+c});}}
 }
 function endDrag(cx,cy){dragging=false;var hsEl=document.getElementById('hs');if(hsEl)hsEl.classList.remove('hover');holdHov=false;var hs2El=document.getElementById('hs2');if(hs2El)hs2El.classList.remove('hover');holdHov2=false;
   // Save drag rect BEFORE removing dragEl — used by overHoldBox
