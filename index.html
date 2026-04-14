@@ -2073,7 +2073,7 @@ function clearLines(onDone){
   var totalAnim=Math.round(4.5)*STAGGER+320+60; // max dist stagger + anim duration
   setTimeout(function(){
     // Track adv block clears before zeroing
-    if(advMode){rows.forEach(function(r){for(var c=0;c<COLS;c++)advTrackClearBlock(r,c);});cols.forEach(function(c){for(var r=0;r<ROWS;r++)advTrackClearBlock(r,c);});}
+    if(advMode)advTrackClearBlocks(rows,cols);
     rows.forEach(function(r){grid[r].fill(0);if(advMode&&advColorGrid[r])advColorGrid[r].fill(0);});
     cols.forEach(function(c){for(var r=0;r<ROWS;r++){grid[r][c]=0;if(advMode&&advColorGrid[r])advColorGrid[r][c]=0;}});
     syncBoard();
@@ -3244,6 +3244,27 @@ function advTrackCombo(c){
   if(!advMode||!advLevel)return;
   advObjProgress['combo']=Math.max(advObjProgress['combo']||0,c);
   renderAdvHUD();checkAdvComplete();
+}
+// Intersection cell (in both a cleared row AND col) counts as 2
+function advTrackClearBlocks(rows,cols){
+  if(!advMode)return;
+  var count=0;
+  rows.forEach(function(r){
+    for(var c=0;c<COLS;c++){
+      if(advBlockGrid[r]&&advBlockGrid[r][c]===1)count++;
+      if(advColorGrid[r]&&advColorGrid[r][c]===1)count++;
+    }
+  });
+  cols.forEach(function(col){
+    for(var r=0;r<ROWS;r++){
+      if(advBlockGrid[r]&&advBlockGrid[r][col]===1)count++;
+      if(advColorGrid[r]&&advColorGrid[r][col]===1)count++;
+    }
+  });
+  if(count>0){
+    advObjProgress['clear_blocks']=(advObjProgress['clear_blocks']||0)+count;
+    renderAdvHUD();checkAdvComplete();
+  }
 }
 function advTrackClearBlock(r,c){
   if(!advMode)return;
