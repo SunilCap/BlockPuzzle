@@ -1340,8 +1340,24 @@ function clearLines(onDone){
   setTimeout(function(){
     // Track adv block clears before zeroing
     if(advMode)advTrackClearBlocks(rows,cols);
-    rows.forEach(function(r){grid[r].fill(0);if(advMode&&advColorGrid[r])advColorGrid[r].fill(0);if(advMode&&advIceGrid[r])advIceGrid[r].fill(0);});
-    cols.forEach(function(c){for(var r=0;r<ROWS;r++){grid[r][c]=0;if(advMode&&advColorGrid[r])advColorGrid[r][c]=0;if(advMode&&advIceGrid[r])advIceGrid[r][c]=0;}});
+    rows.forEach(function(r){
+      for(var cc=0;cc<COLS;cc++){
+        // Skip if cell still has ice remaining — it survives this clear
+        if(advMode&&advIceGrid[r]&&advIceGrid[r][cc]>0)continue;
+        grid[r][cc]=0;
+        if(advMode&&advColorGrid[r])advColorGrid[r][cc]=0;
+        if(advMode&&advBlockGrid[r])advBlockGrid[r][cc]=0;
+      }
+    });
+    cols.forEach(function(cl){
+      for(var rr=0;rr<ROWS;rr++){
+        if(advMode&&advIceGrid[rr]&&advIceGrid[rr][cl]>0)continue;
+        grid[rr][cl]=0;
+        if(advMode&&advColorGrid[rr])advColorGrid[rr][cl]=0;
+        if(advMode&&advBlockGrid[rr])advBlockGrid[rr][cl]=0;
+      }
+    });
+    // cols handled above in new cell-by-cell loop
     syncBoard();
     if(onDone)onDone(pts);
   },totalAnim);
@@ -2422,7 +2438,7 @@ function startAdvLevel(lvl){
     advBlockGrid.push([0,0,0,0,0,0,0,0,0,0]);
     for(var c=0;c<10;c++){
       var v=lvl.grid[r][c];
-      if(v>=2){advIceGrid[r][c]=v;}      // ice
+      if(v>=2){advIceGrid[r][c]=v-1;}    // remap: 2→1(melt),3→2(crack),4→3(hard)
       else if(v===1){advBlockGrid[r][c]=1;} // normal block
     }
   }
@@ -2518,17 +2534,24 @@ function advTrackCombo(c){
   renderAdvHUD();checkAdvComplete();
 }
 // Intersection cell (in both a cleared row AND col) counts as 2
+// Count clear_blocks progress.
+// Colored cells and pre-placed blocks count when their row/col is cleared.
+// Iced cells are excluded — they survive the clear until ice=0.
+// Intersection cells (row+col both cleared) count twice.
 function advTrackClearBlocks(rows,cols){
   if(!advMode)return;
   var count=0;
   rows.forEach(function(r){
     for(var c=0;c<COLS;c++){
+      // Skip if still iced — cell survived this clear
+      if(advIceGrid[r]&&advIceGrid[r][c]>0)continue;
       if(advBlockGrid[r]&&advBlockGrid[r][c]===1)count++;
       if(advColorGrid[r]&&advColorGrid[r][c]===1)count++;
     }
   });
   cols.forEach(function(col){
     for(var r=0;r<ROWS;r++){
+      if(advIceGrid[r]&&advIceGrid[r][col]>0)continue;
       if(advBlockGrid[r]&&advBlockGrid[r][col]===1)count++;
       if(advColorGrid[r]&&advColorGrid[r][col]===1)count++;
     }
@@ -2548,28 +2571,37 @@ function advTrackClearBlock(r,c){
     renderAdvHUD();checkAdvComplete();
   }
 }
+// Ice stages: 3=hard ice, 2=cracked, 1=melting, 0=clear
+// Each line clear hitting an iced cell reduces stage by 1
+// At stage 0 → cell is physically cleared, counts toward break_ice
 function advTrackIce(rows,cols){
   if(!advMode)return;
   var changed=false;
   for(var r=0;r<10;r++){
     for(var c=0;c<10;c++){
       var ice=advIceGrid[r][c];
-      if(ice<1)continue; // 0 = no ice
+      if(ice<1)continue;
       var hit=rows.indexOf(r)>=0||cols.indexOf(c)>=0;
       if(!hit)continue;
       advIceGrid[r][c]=ice-1;
       changed=true;
       if(advIceGrid[r][c]===0){
-        // Fully thawed — now a normal block to be cleared by the line clear
-        // grid[r][c] is already being cleared by clearLines, so ice is gone
-        // Count it toward break_ice objective
+        // Fully thawed — grid[r][c] will be zeroed by clearLines shortly
+        // Count toward break_ice
         advObjProgress['break_ice']=(advObjProgress['break_ice']||0)+1;
-        renderAdvHUD();checkAdvComplete();
+        // Keep grid[r][c]=1 so clearLines physically removes it this turn
+        // (it was already 1, no change needed)
+      } else {
+        // Still icy — PREVENT clearLines from zeroing this cell
+        // Do this by temporarily marking it as 0 in rows/cols arrays
+        // Actually: remove this cell from the clearable rows/cols
+        // Simpler: set grid[r][c]=1 to ensure it stays (it already is)
+        // The cell will NOT be cleared this turn — it just loses an ice stage
+        // We must protect it from grid[r].fill(0)
       }
-      // Note: advBlockGrid not used for ice — ice renders via advIceGrid only
     }
   }
-  if(changed){renderAdvCellStyles();}
+  if(changed){renderAdvCellStyles();renderAdvHUD();}
 }
 
 // ── Check if all objectives met ──
