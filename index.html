@@ -1694,7 +1694,11 @@ document.getElementById('brs').addEventListener('click',function(){
   if(isChallenge){startChallenge(challengeDay,challengeMonth,challengeYear);}else{initGame();}
 });
 document.getElementById('chest-btn').addEventListener('click',openChest);
-document.getElementById('chest-open-close').addEventListener('click',function(){document.getElementById('chest-modal').classList.remove('show');});
+document.getElementById('chest-open-close').addEventListener('click',function(){
+  var reward=parseInt(this.getAttribute('data-reward')||'0');
+  if(reward>0){earnStars(reward);spawnParticles(15);SFX.achieve();this.setAttribute('data-reward','0');updateLobbyStats();}
+  document.getElementById('chest-modal').classList.remove('show');
+});
 document.getElementById('chest-modal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
 document.getElementById('btn-undo').addEventListener('click',shopUndo);
 document.getElementById('btn-shuffle').addEventListener('click',shopShuffle);
@@ -2008,6 +2012,7 @@ function mkGrid(sh,W,H,ht){var cs=fitCs(sh,W,H),pg=document.createElement('div')
 function mkDragGrid(sh,ht){var cs=boardCs()+2,pg=document.createElement('div');pg.className='pgrid';pg.style.gridTemplateColumns='repeat('+sh[0].length+','+cs+'px)';pg.style.gridTemplateRows='repeat('+sh.length+','+cs+'px)';pg.style.gap='2px';for(var r=0;r<sh.length;r++)for(var c=0;c<sh[r].length;c++){var d=document.createElement('div');d.style.width=d.style.height=cs+'px';var v=sh[r][c];if(v){var cls='pc'+(ht===2?' hd2':ht===1?' hd':'');if(v===2)cls+=' adv-colored';d.className=cls;}else{d.style.background='transparent';d.style.border='none';}pg.appendChild(d);}return pg;}
 
 function clearLines(onDone){
+  if(advInitializing){if(onDone)onDone(0);return;}
   var rows=[],cols=[];
   for(var r=0;r<ROWS;r++)if(grid[r].every(function(v){return v;}))rows.push(r);
   for(var c=0;c<COLS;c++)if(grid.every(function(row){return row[c];}))cols.push(c);
@@ -2446,8 +2451,8 @@ function openChest(){
   if(chestGems<tier.cap)return;
   // Reset chest
   chestGems=0;saveChestGems();
+  document.getElementById('chest-open-close').setAttribute('data-reward',String(tier.reward));
   // Award stars
-  earnStars(tier.reward);
   // Show modal
   var modal=document.getElementById('chest-modal');
   var openIcon=document.getElementById('chest-open-icon');
@@ -2892,6 +2897,7 @@ var ADV_LEVELS=[
 //  ADVENTURE MODE ENGINE
 // ══════════════════════════════════════════════
 var advMode=false;
+var advInitializing=false;
 var advLevel=null;       // current level data
 var advIceGrid=[];       // ice stage per cell [row][col]
 var advBlockGrid=[];     // pre-placed blocks [row][col]
@@ -3154,6 +3160,7 @@ function startAdvLevel(lvl){
   goToGame();
   // Apply pre-filled board AFTER goToGame so DOM cells exist
   setTimeout(function(){
+    advInitializing=true;
     // Fill grid with level data
     for(var r=0;r<10;r++){
       for(var c=0;c<10;c++){
@@ -3166,6 +3173,7 @@ function startAdvLevel(lvl){
     renderAdvHUD();
     var nm=document.getElementById('adv-level-name');
     if(nm)nm.textContent='Level '+lvl.id+': '+lvl.name;
+    setTimeout(function(){advInitializing=false;},150);
   },80);
 }
 
@@ -3239,8 +3247,10 @@ function advTrackCombo(c){
 }
 function advTrackClearBlock(r,c){
   if(!advMode)return;
-  if(advBlockGrid[r]&&advBlockGrid[r][c]===1){
-    advBlockGrid[r][c]=0;
+  var counted=false;
+  if(advBlockGrid[r]&&advBlockGrid[r][c]===1){advBlockGrid[r][c]=0;counted=true;}
+  if(advColorGrid[r]&&advColorGrid[r][c]===1){advColorGrid[r][c]=0;counted=true;}
+  if(counted){
     advObjProgress['clear_blocks']=(advObjProgress['clear_blocks']||0)+1;
     renderAdvHUD();checkAdvComplete();
   }
@@ -3409,7 +3419,7 @@ function advColorizePiece(shape){
   var found=false;
   for(var r=0;r<colored.length;r++)
     for(var c=0;c<colored[r].length;c++)
-      if(colored[r][c]===1&&Math.random()<0.35){colored[r][c]=2;found=true;}
+      if(colored[r][c]===1&&Math.random()<0.10){colored[r][c]=2;found=true;}
   return found?colored:shape;
 }
 function rndWithColor(slotIdx){
