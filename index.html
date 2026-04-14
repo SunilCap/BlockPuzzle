@@ -2067,33 +2067,35 @@ function clearLines(onDone){
   for(var r=0;r<ROWS;r++)if(grid[r].every(function(v){return v;}))rows.push(r);
   for(var c=0;c<COLS;c++)if(grid.every(function(row){return row[c];}))cols.push(c);
   if(!rows.length&&!cols.length){combo=0;if(onDone)onDone(0);return;}
+
+  // Reduce ice stages FIRST — before any animation or zeroing
+  // Iced cells that still have stage>0 after reduction stay on board
+  if(advMode)advTrackIce(rows,cols);
+
   combo++;totalLines+=rows.length+cols.length;
-  var n=rows.length+cols.length,base=n===1?100:n===2?300:500*(n-1);
+  var n=rows.length+cols.length;
+  var base=n===1?100:n===2?300:500*(n-1);
   var pts=base+(combo>1?Math.floor(base*0.25*(combo-1)):0);
-  addGems(n*5+(n>1?(n-1)*3:0)+(combo>1?(combo-1)*3:0)); // 5 gems/line, bonuses for multi+combo
+  addGems(n*5+(n>1?(n-1)*3:0)+(combo>1?(combo-1)*3:0));
   updateQuestProgress('lines',n);
   updateQuestProgress('combo',combo);
   advTrackLines(n);
   advTrackCombo(combo);
-  advTrackIce(rows,cols);
   if(combo>1){showComboSplash(combo);}else{SFX.clear();}
   try{var tl=parseInt(_ls.getItem('bp_tot_lines')||'0')||0;_ls.setItem('bp_tot_lines',String(tl+n));var bc=parseInt(_ls.getItem('bp_best_combo')||'0')||0;if(combo>bc)_ls.setItem('bp_best_combo',String(combo));}catch(e){}
 
-  // Screen flash on multi-line
+  // Screen flash
   if(n>=2){
     var cf=document.getElementById('clear-flash');
-    if(cf){
-      cf.style.background=n>=4?'rgba(240,200,50,.35)':'rgba(124,92,191,.25)';
-      cf.classList.remove('pop');void cf.offsetWidth;cf.classList.add('pop');
-    }
+    if(cf){cf.style.background=n>=4?'rgba(240,200,50,.35)':' rgba(124,92,191,.25)';cf.classList.remove('pop');void cf.offsetWidth;cf.classList.add('pop');}
   }
 
-  // Build list of cells to blast — sort by distance from line center for wave effect
+  // Build animation list — skip iced cells (they stay on board, just lose a stage)
   var cells=[];
+  var STAGGER=18;
   rows.forEach(function(r){
     for(var c=0;c<COLS;c++){
-      // Skip iced cells — they don't animate out, they just lose a stage
-      if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)continue;
+      if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)continue; // still iced — skip
       var el=cellEl(r,c);
       if(el&&grid[r][c])cells.push({el:el,dist:Math.abs(c-4.5)});
     }
@@ -2102,15 +2104,13 @@ function clearLines(onDone){
     for(var r=0;r<ROWS;r++){
       if(advMode&&advIceGrid[r]&&advIceGrid[r][c]>0)continue;
       var el=cellEl(r,c);
-      if(el&&grid[r][c]){
-        if(!cells.find(function(x){return x.el===el;}))
-          cells.push({el:el,dist:Math.abs(r-4.5)});
+      if(el&&grid[r][c]&&!cells.find(function(x){return x.el===el;})){
+        cells.push({el:el,dist:Math.abs(r-4.5)});
       }
     }
   });
 
-  // Sequential blast: stagger by distance from center (wave outward)
-  var STAGGER=18; // ms per step
+  // Blast animation on clearable cells
   cells.forEach(function(item){
     var delay=Math.round(item.dist)*STAGGER;
     setTimeout(function(){
@@ -2119,16 +2119,16 @@ function clearLines(onDone){
     },delay);
   });
 
-  // Fire particle burst from board center
   spawnParticles(n);
 
-  var totalAnim=Math.round(4.5)*STAGGER+320+60; // max dist stagger + anim duration
+  var totalAnim=Math.round(4.5)*STAGGER+320+60;
   setTimeout(function(){
-    // Track adv block clears before zeroing
+    // Count cleared blocks (excluding iced cells — they already reduced stage above)
     if(advMode)advTrackClearBlocks(rows,cols);
+
+    // Zero cleared cells — skip any that still have ice
     rows.forEach(function(r){
       for(var cc=0;cc<COLS;cc++){
-        // Skip if cell still has ice remaining — it survives this clear
         if(advMode&&advIceGrid[r]&&advIceGrid[r][cc]>0)continue;
         grid[r][cc]=0;
         if(advMode&&advColorGrid[r])advColorGrid[r][cc]=0;
@@ -2143,8 +2143,8 @@ function clearLines(onDone){
         if(advMode&&advBlockGrid[rr])advBlockGrid[rr][cl]=0;
       }
     });
-    // cols handled above in new cell-by-cell loop
-    syncBoard();
+
+    syncBoard(); // redraws board — iced cells re-render with new stage
     if(onDone)onDone(pts);
   },totalAnim);
 }
@@ -3376,28 +3376,24 @@ function advTrackIce(rows,cols){
   for(var r=0;r<10;r++){
     for(var c=0;c<10;c++){
       var ice=advIceGrid[r][c];
-      if(ice<1)continue;
-      var hit=rows.indexOf(r)>=0||cols.indexOf(c)>=0;
-      if(!hit)continue;
+      if(ice<1)continue; // no ice here
+      // Only reduce if this cell's row OR col is being cleared
+      if(rows.indexOf(r)<0&&cols.indexOf(c)<0)continue;
+      // Reduce by 1 stage
       advIceGrid[r][c]=ice-1;
       changed=true;
       if(advIceGrid[r][c]===0){
-        // Fully thawed — grid[r][c] will be zeroed by clearLines shortly
-        // Count toward break_ice
+        // Fully thawed — this cell will be zeroed by clearLines (grid[r][c]=0)
+        // Count toward break_ice objective
         advObjProgress['break_ice']=(advObjProgress['break_ice']||0)+1;
-        // Keep grid[r][c]=1 so clearLines physically removes it this turn
-        // (it was already 1, no change needed)
-      } else {
-        // Still icy — PREVENT clearLines from zeroing this cell
-        // Do this by temporarily marking it as 0 in rows/cols arrays
-        // Actually: remove this cell from the clearable rows/cols
-        // Simpler: set grid[r][c]=1 to ensure it stays (it already is)
-        // The cell will NOT be cleared this turn — it just loses an ice stage
-        // We must protect it from grid[r].fill(0)
+        renderAdvHUD();checkAdvComplete();
       }
+      // If still iced (stage>0): grid[r][c] stays 1, cell stays on board
+      // clearLines will skip zeroing it (see ice skip in setTimeout)
     }
   }
-  if(changed){renderAdvCellStyles();renderAdvHUD();}
+  // Update visuals immediately so player sees stage change
+  if(changed)renderAdvCellStyles();
 }
 
 // ── Check if all objectives met ──
