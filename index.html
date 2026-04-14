@@ -3217,38 +3217,39 @@ function startAdvLevel(lvl){
   advColorGrid=[];
   for(var _i=0;_i<10;_i++)advColorGrid.push([0,0,0,0,0,0,0,0,0,0]);
   lvl.objectives.forEach(function(o){advObjProgress[o.type]=0;});
-  // Build ice/block grids
+  // Build ice/block grids from level data
   advIceGrid=[];advBlockGrid=[];
   for(var r=0;r<10;r++){
     advIceGrid.push([0,0,0,0,0,0,0,0,0,0]);
     advBlockGrid.push([0,0,0,0,0,0,0,0,0,0]);
     for(var c=0;c<10;c++){
       var v=lvl.grid[r][c];
-      if(v>=2){advIceGrid[r][c]=v-1;}    // remap: 2→1(melt),3→2(crack),4→3(hard)
-      else if(v===1){advBlockGrid[r][c]=1;} // normal block
+      if(v>=2)advIceGrid[r][c]=v-1;    // remap: 2→1(melt),3→2(crack),4→3(hard)
+      else if(v===1)advBlockGrid[r][c]=1;
     }
   }
-  // Init game
+  // initGame resets grid — call it once via goToGame
   isChallenge=false;
-  initGame();
-  goToGame();
-  // Apply pre-filled board AFTER goToGame so DOM cells exist
-  setTimeout(function(){
-    advInitializing=true;
-    // Fill grid with level data
-    for(var r=0;r<10;r++){
-      for(var c=0;c<10;c++){
-        var v=lvl.grid[r][c];
-        if(v>=1)grid[r][c]=1;
-      }
+  // Set flag so goToGame skips its own initGame call
+  var _advSkipInit=true;
+  initGame(); // sets up board DOM, pieces, score
+  // Now pre-fill grid with level data BEFORE showing the screen
+  advInitializing=true;
+  for(var r=0;r<10;r++){
+    for(var c=0;c<10;c++){
+      if(lvl.grid[r][c]>=1)grid[r][c]=1;
     }
-    syncBoard();
-    renderAdvCellStyles();
-    renderAdvHUD();
-    var nm=document.getElementById('adv-level-name');
-    if(nm)nm.textContent='Level '+lvl.id+': '+lvl.name;
-    setTimeout(function(){advInitializing=false;},150);
-  },80);
+  }
+  syncBoard();          // renders board with pre-filled cells
+  renderAdvCellStyles(); // applies ice/block colours
+  renderAdvHUD();
+  var nm=document.getElementById('adv-level-name');
+  if(nm)nm.textContent='Level '+lvl.id+': '+lvl.name;
+  // Now go to game screen — skip initGame inside goToGame
+  isChallenge=true; // trick: goToGame skips initGame when isChallenge=true
+  goToGame();
+  isChallenge=false;
+  setTimeout(function(){advInitializing=false;},100);
 }
 
 // Apply visual ice/block styling to cells
