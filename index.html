@@ -2075,8 +2075,13 @@ function mkDragGrid(sh,ht){var cs=boardCs()+2,pg=document.createElement('div');p
 function clearLines(onDone){
   if(advInitializing){if(onDone)onDone(0);return;}
   var rows=[],cols=[];
-  for(var r=0;r<ROWS;r++)if(grid[r].every(function(v){return v;}))rows.push(r);
-  for(var c=0;c<COLS;c++)if(grid.every(function(row){return row[c];}))cols.push(c);
+  for(var r=0;r<ROWS;r++){if(grid[r].every(function(v){return v;})){// Only clear if player placed at least one cell (not all pre-filled ice)
+    var hasPlayerCell=!advMode||!advPreGrid[r]||grid[r].some(function(v,c){return v&&!advPreGrid[r][c];});
+    if(hasPlayerCell)rows.push(r);}}
+
+  for(var c=0;c<COLS;c++){if(grid.every(function(row){return row[c];})){var hasPlayerCellC=!advMode||advPreGrid.some(function(row,r){return grid[r][c]&&!row[c];});
+    if(hasPlayerCellC)cols.push(c);}}
+
   if(!rows.length&&!cols.length){combo=0;if(onDone)onDone(0);return;}
 
   // Reduce ice stages FIRST — before any animation or zeroing
@@ -2832,7 +2837,7 @@ var ADV_LEVELS=[
 
   {id:17,name:'Fortress',
    grid:[
-     [4,4,4,4,4,4,4,4,4,4],
+     [0,4,4,4,4,4,4,4,4,0],
      [4,3,3,3,3,3,3,3,3,4],
      [4,3,2,2,2,2,2,2,3,4],
      [4,3,2,0,0,0,0,2,3,4],
@@ -2841,9 +2846,9 @@ var ADV_LEVELS=[
      [4,3,2,0,0,0,0,2,3,4],
      [4,3,2,2,2,2,2,2,3,4],
      [4,3,3,3,3,3,3,3,3,4],
-     [4,4,4,4,4,4,4,4,4,4],
+     [0,4,4,4,4,4,4,4,4,0],
    ],
-   objectives:[{type:'break_ice',target:84},{type:'score',target:6000}],
+   objectives:[{type:'break_ice',target:80},{type:'score',target:6000}],
    stars:[3800,7000,11000]},
 
   {id:18,name:'X Marks',
@@ -3226,7 +3231,8 @@ function startAdvLevel(lvl){
   advObjProgress={};
   advColoredPieces=[null,null,null];
   advColorGrid=[];
-  for(var _i=0;_i<10;_i++)advColorGrid.push([0,0,0,0,0,0,0,0,0,0]);
+  advPreGrid=[];
+  for(var _i=0;_i<10;_i++){advColorGrid.push([0,0,0,0,0,0,0,0,0,0]);advPreGrid.push([0,0,0,0,0,0,0,0,0,0]);}
   lvl.objectives.forEach(function(o){advObjProgress[o.type]=0;});
   // Build ice/block grids from level data
   advIceGrid=[];advBlockGrid=[];
@@ -3248,7 +3254,7 @@ function startAdvLevel(lvl){
   advInitializing=true;
   for(var r=0;r<10;r++){
     for(var c=0;c<10;c++){
-      if(lvl.grid[r][c]>=1)grid[r][c]=1;
+      if(lvl.grid[r][c]>=1){grid[r][c]=1;if(advPreGrid[r])advPreGrid[r][c]=1;}
     }
   }
   syncBoard();          // renders board with pre-filled cells
@@ -3550,13 +3556,14 @@ function showAdvFailed(){
 function resetAdvMode(){
   advMode=false;advLevel=null;advLevelComplete=false;
   advIceGrid=[];advBlockGrid=[];advObjProgress={};
-  advColorGrid=[];advColoredPieces=[null,null,null];
+  advColorGrid=[];advPreGrid=[];advColoredPieces=[null,null,null];
   hideAdvHUD();
 }
 
 
 var advColoredPieces=[null,null,null];
 var advColorGrid=[];
+var advPreGrid=[]; // cells pre-filled at level start
 function advColorizePiece(shape){
   // Embed colour directly into shape: 2 = coloured cell
   if(!advMode||!advLevel)return shape;
