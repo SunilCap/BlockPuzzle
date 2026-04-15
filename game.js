@@ -1819,7 +1819,7 @@ var ADV_LEVELS=[
      [1,1,0,0,0,0,0,0,1,1],
      [1,1,0,0,0,0,0,0,1,1],
    ],
-   objectives:[{type:'clear_blocks',target:12},{type:'score',target:800}],
+   objectives:[{type:'clear_blocks',target:16},{type:'score',target:800}],
    stars:[500,900,1400]},
 
   {id:3,name:'The Cross',
@@ -1835,7 +1835,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'clear_blocks',target:15},{type:'lines',target:2}],
+   objectives:[{type:'clear_blocks',target:14},{type:'lines',target:2}],
    stars:[600,1100,1800]},
 
   {id:4,name:'Diagonal',
@@ -1885,7 +1885,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:6},{type:'score',target:1200}],
+   objectives:[{type:'break_ice',target:12},{type:'score',target:1200}],
    stars:[900,1600,2600]},
 
   {id:7,name:'Ice Border',
@@ -1901,7 +1901,7 @@ var ADV_LEVELS=[
      [3,0,0,0,0,0,0,0,0,3],
      [3,3,3,3,3,3,3,3,3,3],
    ],
-   objectives:[{type:'break_ice',target:16},{type:'lines',target:4}],
+   objectives:[{type:'break_ice',target:36},{type:'lines',target:4}],
    stars:[1100,2000,3200]},
 
   {id:8,name:'Deep Freeze',
@@ -1917,7 +1917,7 @@ var ADV_LEVELS=[
      [0,3,3,3,0,0,3,3,3,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:16},{type:'score',target:1800}],
+   objectives:[{type:'break_ice',target:32},{type:'score',target:1800}],
    stars:[1200,2200,3500]},
 
   {id:9,name:'Glacier',
@@ -1933,7 +1933,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:24},{type:'combo',target:3}],
+   objectives:[{type:'break_ice',target:40},{type:'combo',target:3}],
    stars:[1400,2600,4000]},
 
   {id:10,name:'CHEST II 🥈',chest:true,
@@ -1949,7 +1949,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:20},{type:'score',target:2500}],
+   objectives:[{type:'break_ice',target:32},{type:'score',target:2500}],
    stars:[1600,3000,5000],
    chestReward:{stars:35,trophy:'bronze'}},
 
@@ -2015,7 +2015,7 @@ var ADV_LEVELS=[
      [0,0,0,1,2,2,1,0,0,0],
      [0,0,0,0,1,1,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:30},{type:'score',target:4000}],
+   objectives:[{type:'break_ice',target:36},{type:'clear_blocks',target:20},{type:'score',target:4000}],
    stars:[2500,4500,7000]},
 
   {id:15,name:'CHEST III 🥇',chest:true,
@@ -2031,14 +2031,14 @@ var ADV_LEVELS=[
      [4,0,0,0,0,0,0,0,0,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:40},{type:'score',target:5000}],
+   objectives:[{type:'break_ice',target:60},{type:'score',target:5000}],
    stars:[3000,5500,8500],
    chestReward:{stars:50,trophy:'silver'}},
 
   // ── WORLD 4: Extreme (16-20) ──
   {id:16,name:'Blizzard',
    grid:[
-     [4,3,2,1,0,0,1,2,3,4],
+     [4,3,2,2,0,0,2,2,3,4],
      [3,4,3,2,0,0,2,3,4,3],
      [2,3,4,3,0,0,3,4,3,2],
      [0,0,0,0,0,0,0,0,0,0],
@@ -2065,7 +2065,7 @@ var ADV_LEVELS=[
      [4,3,3,3,3,3,3,3,3,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:60},{type:'score',target:6000}],
+   objectives:[{type:'break_ice',target:84},{type:'score',target:6000}],
    stars:[3800,7000,11000]},
 
   {id:18,name:'X Marks',
@@ -2081,7 +2081,7 @@ var ADV_LEVELS=[
      [0,4,0,3,0,0,3,0,4,0],
      [4,0,0,0,3,3,0,0,0,4],
    ],
-   objectives:[{type:'break_ice',target:40},{type:'lines',target:8},{type:'score',target:5500}],
+   objectives:[{type:'break_ice',target:36},{type:'lines',target:8},{type:'score',target:5500}],
    stars:[4000,7500,12000]},
 
   {id:19,name:'Avalanche',
@@ -2113,7 +2113,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:40},{type:'score',target:8000}],
+   objectives:[{type:'break_ice',target:30},{type:'clear_blocks',target:6},{type:'score',target:8000}],
    stars:[5000,9000,14000],
    chestReward:{stars:75,trophy:'gold'}},
 
@@ -2131,7 +2131,7 @@ var ADV_LEVELS=[
      [4,4,3,3,3,3,3,3,4,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:60},{type:'score',target:10000}],
+   objectives:[{type:'break_ice',target:92},{type:'clear_blocks',target:8},{type:'score',target:10000}],
    stars:[6000,10000,16000]},
 
   {id:22,name:'The Gauntlet',
@@ -2147,7 +2147,7 @@ var ADV_LEVELS=[
      [4,0,0,0,0,0,0,0,0,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:64},{type:'combo',target:4},{type:'score',target:9000}],
+   objectives:[{type:'break_ice',target:56},{type:'combo',target:4},{type:'score',target:9000}],
    stars:[6500,11000,17000]},
 
   {id:23,name:'Absolute Zero',
