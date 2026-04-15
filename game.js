@@ -1890,7 +1890,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:12},{type:'score',target:1200}],
+   objectives:[{type:'break_ice',target:6},{type:'score',target:1200}],
    stars:[900,1600,2600]},
 
   {id:7,name:'Ice Border',
@@ -1906,7 +1906,7 @@ var ADV_LEVELS=[
      [3,0,0,0,0,0,0,0,0,3],
      [3,3,3,3,3,3,3,3,3,3],
    ],
-   objectives:[{type:'break_ice',target:36},{type:'lines',target:4}],
+   objectives:[{type:'break_ice',target:20},{type:'lines',target:4}],
    stars:[1100,2000,3200]},
 
   {id:8,name:'Deep Freeze',
@@ -1922,7 +1922,7 @@ var ADV_LEVELS=[
      [0,3,3,3,0,0,3,3,3,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:32},{type:'score',target:1800}],
+   objectives:[{type:'break_ice',target:18},{type:'score',target:1800}],
    stars:[1200,2200,3500]},
 
   {id:9,name:'Glacier',
@@ -1938,7 +1938,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:40},{type:'combo',target:3}],
+   objectives:[{type:'break_ice',target:22},{type:'combo',target:3}],
    stars:[1400,2600,4000]},
 
   {id:10,name:'CHEST II 🥈',chest:true,
@@ -1954,7 +1954,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:32},{type:'score',target:2500}],
+   objectives:[{type:'break_ice',target:18},{type:'score',target:2500}],
    stars:[1600,3000,5000],
    chestReward:{stars:35,trophy:'bronze'}},
 
@@ -2004,7 +2004,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:20},{type:'combo',target:4}],
+   objectives:[{type:'break_ice',target:12},{type:'combo',target:4}],
    stars:[2200,4000,6500]},
 
   {id:14,name:'Diamond Mine',
@@ -2020,7 +2020,7 @@ var ADV_LEVELS=[
      [0,0,0,1,2,2,1,0,0,0],
      [0,0,0,0,1,1,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:36},{type:'clear_blocks',target:20},{type:'score',target:4000}],
+   objectives:[{type:'break_ice',target:20},{type:'clear_blocks',target:20},{type:'score',target:4000}],
    stars:[2500,4500,7000]},
 
   {id:15,name:'CHEST III 🥇',chest:true,
@@ -2036,7 +2036,7 @@ var ADV_LEVELS=[
      [4,0,0,0,0,0,0,0,0,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:60},{type:'score',target:5000}],
+   objectives:[{type:'break_ice',target:34},{type:'score',target:5000}],
    stars:[3000,5500,8500],
    chestReward:{stars:50,trophy:'silver'}},
 
@@ -2054,7 +2054,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:24},{type:'combo',target:3},{type:'score',target:4500}],
+   objectives:[{type:'break_ice',target:14},{type:'combo',target:3},{type:'score',target:4500}],
    stars:[3200,5800,9000]},
 
   {id:17,name:'Fortress',
@@ -2070,7 +2070,7 @@ var ADV_LEVELS=[
      [4,3,3,3,3,3,3,3,3,4],
      [0,4,4,4,4,4,4,4,4,0],
    ],
-   objectives:[{type:'break_ice',target:80},{type:'score',target:6000}],
+   objectives:[{type:'break_ice',target:44},{type:'score',target:6000}],
    stars:[3800,7000,11000]},
 
   {id:18,name:'X Marks',
@@ -2086,7 +2086,7 @@ var ADV_LEVELS=[
      [0,4,0,3,0,0,3,0,4,0],
      [4,0,0,0,3,3,0,0,0,4],
    ],
-   objectives:[{type:'break_ice',target:36},{type:'lines',target:8},{type:'score',target:5500}],
+   objectives:[{type:'break_ice',target:20},{type:'lines',target:8},{type:'score',target:5500}],
    stars:[4000,7500,12000]},
 
   {id:19,name:'Avalanche',
@@ -2102,7 +2102,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:30},{type:'combo',target:5},{type:'score',target:7000}],
+   objectives:[{type:'break_ice',target:16},{type:'combo',target:5},{type:'score',target:7000}],
    stars:[4500,8000,13000]},
 
   {id:20,name:'CHEST IV 💎',chest:true,
@@ -2118,7 +2118,7 @@ var ADV_LEVELS=[
      [0,0,0,0,0,0,0,0,0,0],
      [0,0,0,0,0,0,0,0,0,0],
    ],
-   objectives:[{type:'break_ice',target:30},{type:'clear_blocks',target:6},{type:'score',target:8000}],
+   objectives:[{type:'break_ice',target:16},{type:'clear_blocks',target:6},{type:'score',target:8000}],
    stars:[5000,9000,14000],
    chestReward:{stars:75,trophy:'gold'}},
 
@@ -2136,7 +2136,7 @@ var ADV_LEVELS=[
      [4,4,3,3,3,3,3,3,4,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:92},{type:'clear_blocks',target:8},{type:'score',target:10000}],
+   objectives:[{type:'break_ice',target:50},{type:'clear_blocks',target:8},{type:'score',target:10000}],
    stars:[6000,10000,16000]},
 
   {id:22,name:'The Gauntlet',
@@ -2152,7 +2152,7 @@ var ADV_LEVELS=[
      [4,0,0,0,0,0,0,0,0,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:56},{type:'combo',target:4},{type:'score',target:9000}],
+   objectives:[{type:'break_ice',target:30},{type:'combo',target:4},{type:'score',target:9000}],
    stars:[6500,11000,17000]},
 
   {id:23,name:'Absolute Zero',
@@ -2168,7 +2168,7 @@ var ADV_LEVELS=[
      [4,4,4,4,4,4,4,4,4,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:84},{type:'lines',target:10},{type:'score',target:12000}],
+   objectives:[{type:'break_ice',target:46},{type:'lines',target:10},{type:'score',target:12000}],
    stars:[7500,13000,20000]},
 
   {id:24,name:'Endgame',
@@ -2184,7 +2184,7 @@ var ADV_LEVELS=[
      [4,3,4,3,4,3,4,3,4,3],
      [3,4,3,4,3,4,3,4,3,4],
    ],
-   objectives:[{type:'break_ice',target:96},{type:'combo',target:5},{type:'score',target:15000}],
+   objectives:[{type:'break_ice',target:52},{type:'combo',target:5},{type:'score',target:15000}],
    stars:[8500,15000,22000]},
 
   {id:25,name:'CHEST V 👑',chest:true,
@@ -2200,7 +2200,7 @@ var ADV_LEVELS=[
      [4,4,4,4,4,4,4,4,4,4],
      [4,4,4,4,4,4,4,4,4,4],
    ],
-   objectives:[{type:'break_ice',target:100},{type:'score',target:20000},{type:'combo',target:5}],
+   objectives:[{type:'break_ice',target:56},{type:'score',target:20000},{type:'combo',target:5}],
    stars:[10000,18000,28000],
    chestReward:{stars:100,trophy:'campaign_master'}},
 ];
@@ -2209,6 +2209,8 @@ var ADV_LEVELS=[
 //  ADVENTURE MODE ENGINE
 // ══════════════════════════════════════════════
 var advMode=false;
+var advFirstClear=false;  // was this the first time completing this level?
+var advHalfShown={};      // which objectives already showed halfway toast
 var advInitializing=false;
 var advLevel=null;       // current level data
 var advIceGrid=[];       // ice stage per cell [row][col]
@@ -2224,6 +2226,8 @@ function saveAdvProgress(p){try{localStorage.setItem('bp_adv_progress',JSON.stri
 function getAdvUnlocked(){var p=getAdvProgress();return p.unlocked||1;}
 function getAdvStars(levelId){var p=getAdvProgress();return (p.stars&&p.stars[levelId])||0;}
 function saveAdvLevelResult(levelId,stars){
+  var isFirst=!(getAdvProgress().stars&&getAdvProgress().stars[levelId]);
+  if(isFirst){addGems(30);showToast('🎉 First Clear! +30 gems bonus!','info');spawnParticles(12);}
   var p=getAdvProgress();
   p.stars=p.stars||{};
   p.stars[levelId]=Math.max(p.stars[levelId]||0,stars);
@@ -2449,6 +2453,9 @@ function startAdvLevel(lvl){
   advMode=true;
   advLevel=lvl;
   advLevelComplete=false;
+  var prog=getAdvProgress();
+  advFirstClear=!(prog.stars&&prog.stars[lvl.id]&&prog.stars[lvl.id]>0);
+  advHalfShown={};
   // Init objective progress
   advObjProgress={};
   advColoredPieces=[null,null,null];
@@ -2539,6 +2546,20 @@ function renderAdvHUD(){
   // Update level name in HUD
   var nm=document.getElementById('adv-level-name');
   if(nm)nm.textContent='Level '+advLevel.id+': '+advLevel.name;
+  // Check halfway milestone for each objective
+  if(advMode&&advLevel&&!advLevelComplete){
+    advLevel.objectives.forEach(function(o){
+      var prog=advObjProgress[o.type]||0;
+      var half=Math.floor(o.target/2);
+      var key=o.type+'_half';
+      if(prog>=half&&half>0&&!advHalfShown[key]){
+        advHalfShown[key]=true;
+        var icon={score:'🎯',clear_blocks:'🟪',break_ice:'❄️',combo:'🔥',lines:'✨'}[o.type]||'📋';
+        showToast(icon+' Halfway there! Keep going! 🎉','info');
+        spawnParticles(6);
+      }
+    });
+  }
 }
 function objIcon(type){
   return{score:'🎯',clear_blocks:'🟪',break_ice:'❄️',combo:'🔥',lines:'✨'}[type]||'📋';
