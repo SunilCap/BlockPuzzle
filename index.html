@@ -3503,7 +3503,38 @@ function showAdvFailed(){
     return objIcon(o.type)+' '+objLabel(o)+': '+prog+'/'+o.target+(prog>=o.target?' ✓':'');
   }).join('\n');
   document.getElementById('adv-fail-obj').textContent=objText;
-  // Wire buttons
+  // Power-up buttons — disable if player can't afford
+  var costs={shuffle:2,undo:3,blast:5};
+  var pwrBtns=document.querySelectorAll('.adv-fail-pwrup');
+  var canAffordAny=false;
+  pwrBtns.forEach(function(btn){
+    var type=btn.getAttribute('data-type');
+    var cost=costs[type]||0;
+    var canAfford=stars>=cost;
+    if(canAfford)canAffordAny=true;
+    // Dim and disable if can't afford
+    btn.style.opacity=canAfford?'1':'0.35';
+    btn.style.pointerEvents=canAfford?'auto':'none';
+    btn.querySelector('.fp-cost').textContent=cost+'⭐';
+    btn.onclick=canAfford?function(){
+      var t=this.getAttribute('data-type');
+      modal.classList.remove('show');
+      if(t==='shuffle')shopShuffle();
+      else if(t==='blast')shopBlast();
+      else if(t==='undo')shopUndo();
+    }:null;
+  });
+  // If no power-ups affordable, highlight restart prominently
+  var restartBtn=document.getElementById('adv-fail-restart');
+  var subEl=document.getElementById('adv-fail-sub');
+  if(!canAffordAny){
+    if(subEl)subEl.textContent='Not enough ⭐ stars for power-ups. Restart the level?';
+    if(restartBtn){restartBtn.style.background='linear-gradient(135deg,#1ecfb0,#0aa890)';restartBtn.style.color='#fff';restartBtn.style.fontWeight='900';}
+  } else {
+    if(subEl)subEl.textContent='No more moves! Use a power-up to continue.';
+    if(restartBtn){restartBtn.style.background='';restartBtn.style.color='';restartBtn.style.fontWeight='';}
+  }
+  // Wire restart and home
   document.getElementById('adv-fail-restart').onclick=function(){
     modal.classList.remove('show');
     startAdvLevel(advLevel);
@@ -3512,17 +3543,6 @@ function showAdvFailed(){
     modal.classList.remove('show');
     advMode=false;hideAdvHUD();goHome();
   };
-  // Powerup buttons - wire Shuffle, Blast
-  var pwrBtns=document.querySelectorAll('.adv-fail-pwrup');
-  pwrBtns.forEach(function(btn){
-    var type=btn.getAttribute('data-type');
-    btn.onclick=function(){
-      modal.classList.remove('show');
-      if(type==='shuffle')shopShuffle();
-      else if(type==='blast')shopBlast();
-      else if(type==='undo')shopUndo();
-    };
-  });
   if(modal){modal.classList.remove('show');void modal.offsetWidth;modal.classList.add('show');}
 }
 
