@@ -1547,7 +1547,7 @@ function endDrag(cx,cy){dragging=false;var hsEl=document.getElementById('hs');if
   if(dragEl){dragEl.remove();dragEl=null;}
   if(!dragPiece){clearGhost();dragPiece=null;dragSlot=null;dragFromHold=false;dragFromHold2=false;window._lastDragRect=null;return;}
   if(!dragFromHold&&!dragFromHold2&&overHoldBox('hs',cx,cy)){clearGhost();window._lastDragRect=null;var prev=held;held=dragPiece;if(dragSlot!==null)pieces[dragSlot]=prev;else held2=prev;dragPiece=null;dragSlot=null;dragFromHold=false;dragFromHold2=false;if(pieces.every(function(p){return p===null;}))pieces=[rnd(),rnd(),rnd()];renderTray();checkState(pieces.slice(),held,held2);return;}
-  if(false&&!dragFromHold&&!dragFromHold2&&overHoldBox('hs2',cx,cy)){clearGhost();window._lastDragRect=null;var prev2=held2;held2=dragPiece;if(dragSlot!==null)pieces[dragSlot]=prev2;else held=prev2;dragPiece=null;dragSlot=null;dragFromHold=false;dragFromHold2=false;if(pieces.every(function(p){return p===null;}))pieces=[rnd(),rnd(),rnd()];renderTray();checkState(pieces.slice(),held,held2);return;}window._lastDragRect=null;var shape=trimShape(dragPiece);var sr,sc;if(snapPos){sr=snapPos.r;sc=snapPos.c;}else{var dp=dropPos(cx,cy);sr=dp.row-Math.floor(shape.length/2);sc=dp.col-Math.floor(shape[0].length/2);}clearGhost();var wasFH=dragFromHold,wasFH2=dragFromHold2,wasSlot=dragSlot;dragPiece=null;dragSlot=null;dragFromHold=false;dragFromHold2=false;if(canPlace(shape,sr,sc)){if(wasSlot!==null&&rotatedSlots[wasSlot]){spendStars(1);delete rotatedSlots[wasSlot];}if(rotateMode){if(wasSlot!==null&&rotatedSlots[wasSlot]){rotateMode=false;updateShopBtns();hideToast();}else{setTimeout(setRotateHandlers,50);}}saveState();SFX.place();var cnt=doPlace(shape,sr,sc);for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++)if(shape[r][c])resetCell(sr+r,sc+c);var nextPieces,nextHeld,nextHeld2;if(wasFH2){nextHeld=held;nextHeld2=null;nextPieces=pieces.slice();}else if(wasFH){nextHeld=null;nextHeld2=held2;nextPieces=pieces.slice();}else{pieces[wasSlot]=null;if(pieces.every(function(p){return p===null;})){pieces=[rndWithColor(0),rndWithColor(1),rndWithColor(2)];rotatedSlots={};advColoredPieces=[null,null,null];}nextPieces=pieces.slice();nextHeld=held;nextHeld2=held2;}if(wasFH2){held2=null;renderHold2();}else if(wasFH){held=null;renderHold();}else{for(var i=0;i<3;i++)renderSlot(i);}clearLines(function(pts){updateScore(cnt*2+pts);checkState(nextPieces,nextHeld,nextHeld2);});}else{scheduleHint();}}
+  if(false&&!dragFromHold&&!dragFromHold2&&overHoldBox('hs2',cx,cy)){clearGhost();window._lastDragRect=null;var prev2=held2;held2=dragPiece;if(dragSlot!==null)pieces[dragSlot]=prev2;else held=prev2;dragPiece=null;dragSlot=null;dragFromHold=false;dragFromHold2=false;if(pieces.every(function(p){return p===null;}))pieces=[rnd(),rnd(),rnd()];renderTray();checkState(pieces.slice(),held,held2);return;}window._lastDragRect=null;var shape=trimShape(dragPiece);var sr,sc;if(snapPos){sr=snapPos.r;sc=snapPos.c;}else{var dp=dropPos(cx,cy);sr=dp.row-Math.floor(shape.length/2);sc=dp.col-Math.floor(shape[0].length/2);}clearGhost();var wasFH=dragFromHold,wasFH2=dragFromHold2,wasSlot=dragSlot;dragPiece=null;dragSlot=null;dragFromHold=false;dragFromHold2=false;if(canPlace(shape,sr,sc)){if(wasSlot!==null&&rotatedSlots[wasSlot]){spendStars(1);delete rotatedSlots[wasSlot];}if(rotateMode){if(wasSlot!==null&&rotatedSlots[wasSlot]){rotateMode=false;updateShopBtns();hideToast();}else{setTimeout(setRotateHandlers,50);}}saveState();SFX.place();var cnt=doPlace(shape,sr,sc);for(var r=0;r<shape.length;r++)for(var c=0;c<shape[r].length;c++)if(shape[r][c])resetCell(sr+r,sc+c);var nextPieces,nextHeld,nextHeld2;if(wasFH2){nextHeld=held;nextHeld2=null;nextPieces=pieces.slice();}else if(wasFH){nextHeld=null;nextHeld2=held2;nextPieces=pieces.slice();}else{pieces[wasSlot]=null;if(pieces.every(function(p){return p===null;})){pieces=[rndWithColor(0),rndWithColor(1),rndWithColor(2)];rotatedSlots={};advColoredPieces=[null,null,null];}nextPieces=pieces.slice();nextHeld=held;nextHeld2=held2;}if(wasFH2){held2=null;renderHold2();}else if(wasFH){held=null;renderHold();}else{for(var i=0;i<3;i++)renderSlot(i);}clearLines(function(pts){updateScore(cnt*2+pts);checkState(nextPieces,nextHeld,nextHeld2);if(advMode&&advLevel&&!advLevelComplete)saveAdvLevelState(advLevel.id);});}else{scheduleHint();}}
 
 document.getElementById('btn-blast').addEventListener('click',shopBlast);
 document.getElementById('blast-row-btn').addEventListener('click',function(){
@@ -2221,6 +2221,7 @@ function saveAdvProgress(p){try{localStorage.setItem('bp_adv_progress',JSON.stri
 function getAdvUnlocked(){var p=getAdvProgress();return p.unlocked||1;}
 function getAdvStars(levelId){var p=getAdvProgress();return (p.stars&&p.stars[levelId])||0;}
 function saveAdvLevelResult(levelId,stars){
+  clearAdvLevelState(levelId); // clear save on completion
   var isFirst=!(getAdvProgress().stars&&getAdvProgress().stars[levelId]);
   if(isFirst){addGems(30);showToast('🎉 First Clear! +30 gems bonus!','info');spawnParticles(12);}
   var p=getAdvProgress();
@@ -2424,8 +2425,45 @@ function getMondayReset(){
   var next=new Date(now);next.setUTCDate(now.getUTCDate()+dUntilMon);next.setUTCHours(0,0,0,0);return next.getTime();
 }
 function getAdvWeekKey(){return 'bp_adv_'+getWeekNumber();}
+
+// ── Level save/continue system ──
+function getAdvSaveKey(levelId){return getAdvWeekKey()+'_save_'+levelId;}
+function saveAdvLevelState(levelId){
+  if(!advMode||advLevelComplete)return;
+  try{
+    var state={
+      grid:grid.map(function(r){return r.slice();}),
+      iceGrid:advIceGrid.map(function(r){return r.slice();}),
+      blockGrid:advBlockGrid.map(function(r){return r.slice();}),
+      colorGrid:advColorGrid.map(function(r){return r.slice();}),
+      objProgress:JSON.parse(JSON.stringify(advObjProgress)),
+      score:score,
+      pieces:pieces.map(function(p){return p?p.map(function(r){return r.slice();}):null;}),
+      savedAt:Date.now()
+    };
+    localStorage.setItem(getAdvSaveKey(levelId),JSON.stringify(state));
+  }catch(e){}
+}
+function loadAdvLevelState(levelId){
+  try{
+    var s=localStorage.getItem(getAdvSaveKey(levelId));
+    return s?JSON.parse(s):null;
+  }catch(e){return null;}
+}
+function clearAdvLevelState(levelId){
+  try{localStorage.removeItem(getAdvSaveKey(levelId));}catch(e){}
+}
+function hasSavedState(levelId){return !!loadAdvLevelState(levelId);}
+
 function getAdvProgress(){try{return JSON.parse(localStorage.getItem(getAdvWeekKey())||'{}')}catch(e){return{};}}
 function saveAdvProgress(p){try{localStorage.setItem(getAdvWeekKey(),JSON.stringify(p));}catch(e){}}
+function clearAllAdvSaves(){
+  // Clear all level saves for current week on weekly reset
+  try{
+    var prefix=getAdvWeekKey()+'_save_';
+    Object.keys(localStorage).filter(function(k){return k.indexOf(prefix)===0;}).forEach(function(k){localStorage.removeItem(k);});
+  }catch(e){}
+}
 function updateAdvTimer(){
   var el=document.getElementById('adv-map-timer');if(!el)return;
   var left=getMondayReset()-Date.now();
@@ -2442,8 +2480,36 @@ function objLabel(o){
   return '';
 }
 
+// ── Check for saved state before starting ──
+function checkAdvSaveAndStart(lvl){
+  if(!hasSavedState(lvl.id)){startAdvLevel(lvl);return;}
+  // Show continue/restart prompt
+  var saved=loadAdvLevelState(lvl.id);
+  var icons={score:'🎯',clear_blocks:'🟪',break_ice:'❄️',combo:'🔥',lines:'✨'};
+  var progLines=lvl.objectives.map(function(o){
+    var p=Math.min(saved.objProgress[o.type]||0,o.target);
+    return (icons[o.type]||'📋')+' '+p+'/'+o.target+(p>=o.target?' ✓':'');
+  }).join('  ');
+  document.getElementById('adv-save-level-name').textContent='Level '+lvl.id+': '+lvl.name;
+  document.getElementById('adv-save-progress').textContent=progLines;
+  document.getElementById('adv-save-score').textContent='🎯 Score: '+(saved.score||0).toLocaleString();
+  // Wire buttons
+  document.getElementById('adv-save-continue').onclick=function(){
+    document.getElementById('adv-save-modal').classList.remove('show');
+    startAdvLevel(lvl,saved);
+  };
+  document.getElementById('adv-save-restart').onclick=function(){
+    document.getElementById('adv-save-modal').classList.remove('show');
+    clearAdvLevelState(lvl.id);
+    startAdvLevel(lvl);
+  };
+  document.getElementById('adv-save-modal').classList.remove('show');
+  void document.getElementById('adv-save-modal').offsetWidth;
+  document.getElementById('adv-save-modal').classList.add('show');
+}
+
 // ── Start a level ──
-function startAdvLevel(lvl){
+function startAdvLevel(lvl,savedState){
   closeAdvMap();
   advMode=true;
   advLevel=lvl;
@@ -2480,6 +2546,19 @@ function startAdvLevel(lvl){
     for(var c=0;c<10;c++){
       if(lvl.grid[r][c]>=1){grid[r][c]=1;if(advPreGrid[r])advPreGrid[r][c]=1;}
     }
+  }
+  if(savedState){
+    // Restore saved grid and progress
+    for(var r=0;r<10;r++){
+      grid[r]=savedState.grid[r].slice();
+      advIceGrid[r]=savedState.iceGrid[r].slice();
+      advBlockGrid[r]=savedState.blockGrid[r].slice();
+      advColorGrid[r]=savedState.colorGrid[r].slice();
+    }
+    advObjProgress=JSON.parse(JSON.stringify(savedState.objProgress));
+    score=savedState.score||0;
+    document.getElementById('scd').textContent=score;
+    if(savedState.pieces)pieces=savedState.pieces.map(function(p){return p?p.map(function(r){return r.slice();}):null;});
   }
   syncBoard();          // renders board with pre-filled cells
   renderAdvCellStyles(); // applies ice/block colours
@@ -2781,6 +2860,7 @@ function showAdvFailed(){
   // Wire restart and home
   document.getElementById('adv-fail-restart').onclick=function(){
     modal.classList.remove('show');
+    clearAdvLevelState(advLevel.id);
     startAdvLevel(advLevel);
   };
   document.getElementById('adv-fail-home').onclick=function(){
@@ -2861,7 +2941,7 @@ initGame();
 window.addEventListener('resize',renderTray);
 
 document.getElementById('adv-map-back').addEventListener('click',closeAdvMap);
-document.getElementById('adv-play-btn').addEventListener('click',function(){if(_selectedAdvLevel)startAdvLevel(_selectedAdvLevel);});
-document.getElementById('adv-play-btn').addEventListener('touchstart',function(e){e.preventDefault();if(_selectedAdvLevel)startAdvLevel(_selectedAdvLevel);},{passive:false});
+document.getElementById('adv-play-btn').addEventListener('click',function(){if(_selectedAdvLevel)checkAdvSaveAndStart(_selectedAdvLevel);});
+document.getElementById('adv-play-btn').addEventListener('touchstart',function(e){e.preventDefault();if(_selectedAdvLevel)checkAdvSaveAndStart(_selectedAdvLevel);},{passive:false});
 document.getElementById('adv-awards-btn').addEventListener('click',function(){openChallengesModal();});
 document.getElementById('adv-hud-back').addEventListener('click',function(){if(advMode){advMode=false;hideAdvHUD();goHome();setTimeout(openAdvMap,300);}});
